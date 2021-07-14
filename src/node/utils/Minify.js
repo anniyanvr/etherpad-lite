@@ -29,6 +29,7 @@ const RequireKernel = require('etherpad-require-kernel');
 const mime = require('mime-types');
 const Threads = require('threads');
 const log4js = require('log4js');
+const sanitizePathname = require('./sanitizePathname');
 
 const logger = log4js.getLogger('Minify');
 
@@ -40,6 +41,7 @@ const LIBRARY_WHITELIST = [
   'async',
   'js-cookie',
   'security',
+  'split-grid',
   'tinycon',
   'underscore',
   'unorm',
@@ -47,7 +49,7 @@ const LIBRARY_WHITELIST = [
 
 // What follows is a terrible hack to avoid loop-back within the server.
 // TODO: Serve files from another service, or directly from the file system.
-const requestURI = async (url, method, headers) => await new Promise((resolve, reject) => {
+const requestURI = async (url, method, headers) => {
   const parsedUrl = new URL(url);
   let status = 500;
   const content = [];
@@ -57,39 +59,60 @@ const requestURI = async (url, method, headers) => await new Promise((resolve, r
     params: {filename: (parsedUrl.pathname + parsedUrl.search).replace(/^\/static\//, '')},
     headers,
   };
-  const mockResponse = {
-    writeHead: (_status, _headers) => {
-      status = _status;
-      for (const header in _headers) {
-        if (Object.prototype.hasOwnProperty.call(_headers, header)) {
-          headers[header] = _headers[header];
+  let mockResponse;
+  const p = new Promise((resolve) => {
+    mockResponse = {
+      writeHead: (_status, _headers) => {
+        status = _status;
+        for (const header in _headers) {
+          if (Object.prototype.hasOwnProperty.call(_headers, header)) {
+            headers[header] = _headers[header];
+          }
         }
-      }
-    },
-    setHeader: (header, value) => {
-      headers[header.toLowerCase()] = value.toString();
-    },
-    header: (header, value) => {
-      headers[header.toLowerCase()] = value.toString();
-    },
-    write: (_content) => {
-      _content && content.push(_content);
-    },
-    end: (_content) => {
-      _content && content.push(_content);
-      resolve([status, headers, content.join('')]);
-    },
-  };
-  minify(mockRequest, mockResponse).catch(reject);
-});
+      },
+      setHeader: (header, value) => {
+        headers[header.toLowerCase()] = value.toString();
+      },
+      header: (header, value) => {
+        headers[header.toLowerCase()] = value.toString();
+      },
+      write: (_content) => {
+        _content && content.push(_content);
+      },
+      end: (_content) => {
+        _content && content.push(_content);
+        resolve([status, headers, content.join('')]);
+      },
+    };
+  });
+  await minify(mockRequest, mockResponse);
+  return await p;
+};
 
 const requestURIs = (locations, method, headers, callback) => {
-  Promise.all(locations.map((loc) => requestURI(loc, method, headers))).then((responses) => {
+  Promise.all(locations.map(async (loc) => {
+    try {
+      return await requestURI(loc, method, headers);
+    } catch (err) {
+      logger.debug(`requestURI(${JSON.stringify(loc)}, ${JSON.stringify(method)}, ` +
+                   `${JSON.stringify(headers)}) failed: ${err.stack || err}`);
+      return [500, headers, ''];
+    }
+  })).then((responses) => {
     const statuss = responses.map((x) => x[0]);
     const headerss = responses.map((x) => x[1]);
     const contentss = responses.map((x) => x[2]);
     callback(statuss, headerss, contentss);
   });
+};
+
+const compatPaths = {
+  'js/browser.js': 'js/vendors/browser.js',
+  'js/farbtastic.js': 'js/vendors/farbtastic.js',
+  'js/gritter.js': 'js/vendors/gritter.js',
+  'js/html10n.js': 'js/vendors/html10n.js',
+  'js/jquery.js': 'js/vendors/jquery.js',
+  'js/nice-select.js': 'js/vendors/nice-select.js',
 };
 
 /**
@@ -99,18 +122,20 @@ const requestURIs = (locations, method, headers, callback) => {
  */
 const minify = async (req, res) => {
   let filename = req.params.filename;
-
-  // No relative paths, especially if they may go up the file hierarchy.
-  filename = path.join(ROOT_DIR, filename);
-  filename = filename.replace(/\.\./g, '');
-
-  if (filename.indexOf(ROOT_DIR) === 0) {
-    filename = filename.slice(ROOT_DIR.length);
-    filename = filename.replace(/\\/g, '/');
-  } else {
+  try {
+    filename = sanitizePathname(filename);
+  } catch (err) {
+    logger.error(`sanitization of pathname "${filename}" failed: ${err.stack || err}`);
     res.writeHead(404, {});
     res.end();
     return;
+  }
+
+  // Backward compatibility for plugins that require() files from old paths.
+  const newLocation = compatPaths[filename.replace(/^plugins\/ep_etherpad-lite\/static\//, '')];
+  if (newLocation != null) {
+    logger.warn(`request for deprecated path "${filename}", replacing with "${newLocation}"`);
+    filename = newLocation;
   }
 
   /* Handle static files for plugins/libraries:
@@ -126,15 +151,23 @@ const minify = async (req, res) => {
     if (plugins.plugins[library] && match[3]) {
       const plugin = plugins.plugins[library];
       const pluginPath = plugin.package.realPath;
-      filename = path.relative(ROOT_DIR, pluginPath + libraryPath);
-      filename = filename.replace(/\\/g, '/'); // windows path fix
+      filename = path.join(pluginPath, libraryPath);
+      // On Windows, path.relative converts forward slashes to backslashes. Convert them back
+      // because some of the code below assumes forward slashes. Node.js treats both the backlash
+      // and the forward slash characters as pathname component separators on Windows so this does
+      // not change the meaning of the pathname. This conversion does not introduce a directory
+      // traversal vulnerability because all '..\\' substrings have already been removed by
+      // sanitizePathname.
+      filename = filename.replace(/\\/g, '/');
     } else if (LIBRARY_WHITELIST.indexOf(library) !== -1) {
       // Go straight into node_modules
       // Avoid `require.resolve()`, since 'mustache' and 'mustache/index.js'
       // would end up resolving to logically distinct resources.
-      filename = `../node_modules/${library}${libraryPath}`;
+      filename = path.join('../node_modules/', library, libraryPath);
     }
   }
+  const [, spec] = /^plugins\/ep_etherpad-lite\/(tests\/frontend\/specs\/.*)/.exec(filename) || [];
+  if (spec != null) filename = `../${spec}`;
 
   const contentType = mime.lookup(filename);
 
@@ -172,47 +205,6 @@ const minify = async (req, res) => {
   }
 };
 
-// find all includes in ace.js and embed them.
-const getAceFile = async () => {
-  let data = await fs.readFile(`${ROOT_DIR}js/ace.js`, 'utf8');
-
-  // Find all includes in ace.js and embed them
-  const filenames = [];
-  if (settings.minify) {
-    const regex = /\$\$INCLUDE_[a-zA-Z_]+\((['"])([^'"]*)\1\)/gi;
-    // This logic can be simplified via String.prototype.matchAll() once support for Node.js
-    // v11.x and older is dropped.
-    let matches;
-    while ((matches = regex.exec(data)) != null) {
-      filenames.push(matches[2]);
-    }
-  }
-  // Always include the require kernel.
-  filenames.push('../static/js/require-kernel.js');
-
-  data += ';\n';
-  data += 'Ace2Editor.EMBEDED = Ace2Editor.EMBEDED || {};\n';
-
-  // Request the contents of the included file on the server-side and write
-  // them into the file.
-  await Promise.all(filenames.map(async (filename) => {
-    // Hostname "invalid.invalid" is a dummy value to allow parsing as a URI.
-    const baseURI = 'http://invalid.invalid';
-    let resourceURI = baseURI + path.join('/static/', filename);
-    resourceURI = resourceURI.replace(/\\/g, '/'); // Windows (safe generally?)
-
-    const [status, , body] = await requestURI(resourceURI, 'GET', {});
-    const error = !(status === 200 || status === 404);
-    if (!error) {
-      data += `Ace2Editor.EMBEDED[${JSON.stringify(filename)}] = ${
-        JSON.stringify(status === 200 ? body || '' : null)};\n`;
-    } else {
-      console.error(`getAceFile(): error getting ${resourceURI}. Status code: ${status}`);
-    }
-  }));
-  return data;
-};
-
 // Check for the existance of the file and get the last modification date.
 const statFile = async (filename, dirStatLimit) => {
   /*
@@ -234,9 +226,9 @@ const statFile = async (filename, dirStatLimit) => {
   } else {
     let stats;
     try {
-      stats = await fs.stat(ROOT_DIR + filename);
+      stats = await fs.stat(path.resolve(ROOT_DIR, filename));
     } catch (err) {
-      if (err.code === 'ENOENT') {
+      if (['ENOENT', 'ENOTDIR'].includes(err.code)) {
         // Stat the directory instead.
         const [date] = await statFile(path.dirname(filename), dirStatLimit - 1);
         return [date, false];
@@ -248,12 +240,12 @@ const statFile = async (filename, dirStatLimit) => {
 };
 
 const lastModifiedDateOfEverything = async () => {
-  const folders2check = [`${ROOT_DIR}js/`, `${ROOT_DIR}css/`];
+  const folders2check = [path.join(ROOT_DIR, 'js/'), path.join(ROOT_DIR, 'css/')];
   let latestModification = null;
   // go through this two folders
-  await Promise.all(folders2check.map(async (path) => {
+  await Promise.all(folders2check.map(async (dir) => {
     // read the files in the folder
-    const files = await fs.readdir(path);
+    const files = await fs.readdir(dir);
 
     // we wanna check the directory itself for changes too
     files.push('.');
@@ -261,7 +253,7 @@ const lastModifiedDateOfEverything = async () => {
     // go through all files in this folder
     await Promise.all(files.map(async (filename) => {
       // get the stat data of this file
-      const stats = await fs.stat(`${path}/${filename}`);
+      const stats = await fs.stat(path.join(dir, filename));
 
       // compare the modification time to the highest found
       if (latestModification == null || stats.mtime > latestModification) {
@@ -321,9 +313,8 @@ const getFileCompressed = async (filename, contentType) => {
 };
 
 const getFile = async (filename) => {
-  if (filename === 'js/ace.js') return await getAceFile();
   if (filename === 'js/require-kernel.js') return requireDefinition();
-  return await fs.readFile(ROOT_DIR + filename);
+  return await fs.readFile(path.resolve(ROOT_DIR, filename));
 };
 
 exports.minify = (req, res, next) => minify(req, res).catch((err) => next(err || new Error(err)));

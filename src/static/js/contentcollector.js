@@ -55,6 +55,28 @@ const getAttribute = (n, a) => {
   if (n.attribs != null) return n.attribs[a];
   return null;
 };
+// supportedElems are Supported natively within Etherpad and don't require a plugin
+const supportedElems = new Set([
+  'author',
+  'b',
+  'bold',
+  'br',
+  'div',
+  'font',
+  'i',
+  'insertorder',
+  'italic',
+  'li',
+  'lmkr',
+  'ol',
+  'p',
+  'pre',
+  'strong',
+  's',
+  'span',
+  'u',
+  'ul',
+]);
 
 const makeContentCollector = (collectStyles, abrowser, apool, className2Author) => {
   const _blockElems = {
@@ -66,6 +88,7 @@ const makeContentCollector = (collectStyles, abrowser, apool, className2Author) 
 
   hooks.callAll('ccRegisterBlockElements').forEach((element) => {
     _blockElems[element] = 1;
+    supportedElems.add(element);
   });
 
   const isBlockElement = (n) => !!_blockElems[tagName(n) || ''];
@@ -195,7 +218,7 @@ const makeContentCollector = (collectStyles, abrowser, apool, className2Author) 
       }
     }
 
-    if (listType === 'none' || !listType) {
+    if (listType === 'none') {
       delete state.lineAttributes.list;
     } else {
       state.lineAttributes.list = listType;
@@ -295,6 +318,7 @@ const makeContentCollector = (collectStyles, abrowser, apool, className2Author) 
     cc.incrementAttrib(state, na);
   };
   cc.collectContent = function (node, state) {
+    let unsupportedElements = null;
     if (!state) {
       state = {
         flags: { /* name -> nesting counter*/
@@ -310,14 +334,15 @@ const makeContentCollector = (collectStyles, abrowser, apool, className2Author) 
           'list': 'bullet1',
           */
         },
+        unsupportedElements: new Set(),
       };
+      unsupportedElements = state.unsupportedElements;
     }
     const localAttribs = state.localAttribs;
     state.localAttribs = null;
     const isBlock = isBlockElement(node);
-    if (!isBlock && node.name && (node.name !== 'body') && (node.name !== 'br')) {
-      console.warn('Plugin missing: ' +
-          `You might want to install a plugin to support this node name: ${node.name}`);
+    if (!isBlock && node.name && (node.name !== 'body')) {
+      if (!supportedElems.has(node.name)) state.unsupportedElements.add(node.name);
     }
     const isEmpty = _isEmpty(node, state);
     if (isBlock) _ensureColumnZero(state);
@@ -596,6 +621,10 @@ const makeContentCollector = (collectStyles, abrowser, apool, className2Author) 
       }
     }
     state.localAttribs = localAttribs;
+    if (unsupportedElements && unsupportedElements.size) {
+      console.warn('Ignoring unsupported elements (you might want to install a plugin): ' +
+                   `${[...unsupportedElements].join(', ')}`);
+    }
   };
   // can pass a falsy value for end of doc
   cc.notifyNextNode = (node) => {
@@ -701,3 +730,4 @@ const makeContentCollector = (collectStyles, abrowser, apool, className2Author) 
 
 exports.sanitizeUnicode = sanitizeUnicode;
 exports.makeContentCollector = makeContentCollector;
+exports.supportedElems = supportedElems;

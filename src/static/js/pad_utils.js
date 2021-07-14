@@ -60,10 +60,10 @@ const wordCharRegex = new RegExp(`[${[
 const urlRegex = (() => {
   // TODO: wordCharRegex matches many characters that are not permitted in URIs. Are they included
   // here as an attempt to support IRIs? (See https://tools.ietf.org/html/rfc3987.)
-  const urlChar = `[-:@_.,~%+/?=&#!;()$'*${wordCharRegex.source.slice(1, -1)}]`;
+  const urlChar = `[-:@_.,~%+/?=&#!;()\\[\\]$'*${wordCharRegex.source.slice(1, -1)}]`;
   // Matches a single character that should not be considered part of the URL if it is the last
   // character that matches urlChar.
-  const postUrlPunct = '[:.,;?!)\'*]';
+  const postUrlPunct = '[:.,;?!)\\]\'*]';
   // Schemes that must be followed by ://
   const withAuth = `(?:${[
     '(?:x-)?man',
@@ -311,6 +311,9 @@ padutils.setupGlobalExceptionHandler = () => {
       } else {
         throw new Error(`unknown event: ${e.toString()}`);
       }
+      if (err.name != null && msg !== err.name && !msg.startsWith(`${err.name}: `)) {
+        msg = `${err.name}: ${msg}`;
+      }
       const errorId = randomString(20);
 
       let msgAlreadyVisible = false;
@@ -328,12 +331,12 @@ padutils.setupGlobalExceptionHandler = () => {
           $('<p>')
               .text('If the problem persists, please send this error message to your webmaster:'),
           $('<div>').css('text-align', 'left').css('font-size', '.8em').css('margin-top', '1em')
+              .append($('<b>').addClass('error-msg').text(msg)).append($('<br>'))
+              .append(txt(`at ${url} at line ${linenumber}`)).append($('<br>'))
               .append(txt(`ErrorId: ${errorId}`)).append($('<br>'))
               .append(txt(type)).append($('<br>'))
               .append(txt(`URL: ${window.location.href}`)).append($('<br>'))
-              .append(txt(`UserAgent: ${navigator.userAgent}`)).append($('<br>'))
-              .append($('<b>').addClass('error-msg').text(msg)).append($('<br>'))
-              .append(txt(`at ${url} at line ${linenumber}`)).append($('<br>')),
+              .append(txt(`UserAgent: ${navigator.userAgent}`)).append($('<br>')),
         ];
 
         $.gritter.add({

@@ -1,3 +1,146 @@
+# 1.8.14
+
+### Security fixes
+
+* Fixed a persistent XSS vulnerability in the Chat component. In case you can't
+  update to 1.8.14 directly, we strongly recommend to cherry-pick
+  a7968115581e20ef47a533e030f59f830486bdfa. Thanks to sonarsource for the
+  professional disclosure.
+
+### Compatibility changes
+
+* Node.js v12.13.0 or later is now required.
+* The `favicon` setting is now interpreted as a pathname to a favicon file, not
+  a URL. Please see the documentation comment in `settings.json.template`.
+* The undocumented `faviconPad` and `faviconTimeslider` settings have been
+  removed.
+* MySQL/MariaDB now uses connection pooling, which means you will see up to 10
+  connections to the MySQL/MariaDB server (by default) instead of 1. This might
+  cause Etherpad to crash with a "ER_CON_COUNT_ERROR: Too many connections"
+  error if your server is configured with a low connection limit.
+* Changes to environment variable substitution in `settings.json` (see the
+  documentation comments in `settings.json.template` for details):
+  * An environment variable set to the string "null" now becomes `null` instead
+    of the string "null". Similarly, if the environment variable is unset and
+    the default value is "null" (e.g., `"${UNSET_VAR:null}"`), the value now
+    becomes `null` instead of the string "null". It is no longer possible to
+    produce the string "null" via environment variable substitution.
+  * An environment variable set to the string "undefined" now causes the setting
+    to be removed instead of set to the string "undefined". Similarly, if the
+    environment variable is unset and the default value is "undefined" (e.g.,
+    `"${UNSET_VAR:undefined}"`), the setting is now removed instead of set to
+    the string "undefined". It is no longer possible to produce the string
+    "undefined" via environment variable substitution.
+  * Support for unset variables without a default value is now deprecated.
+    Please change all instances of `"${FOO}"` in your `settings.json` to
+    `${FOO:null}` to keep the current behavior.
+  * The `DB_*` variable substitutions in `settings.json.docker` that previously
+    defaulted to `null` now default to "undefined".
+* Calling `next` without argument when using `Changeset.opIterator` does always
+  return a new Op. See b9753dcc7156d8471a5aa5b6c9b85af47f630aa8 for details.
+
+### Notable enhancements and fixes
+
+* MySQL/MariaDB now uses connection pooling, which should improve stability and
+  reduce latency.
+* Bulk database writes are now retried individually on write failure.
+* Minify: Avoid crash due to unhandled Promise rejection if stat fails.
+* padIds are now included in /socket.io query string, e.g.
+  `https://video.etherpad.com/socket.io/?padId=AWESOME&EIO=3&transport=websocket&t=...&sid=...`.
+  This is useful for directing pads to separate socket.io nodes.
+* <script> elements added via aceInitInnerdocbodyHead hook are now executed.
+* Fix read only pad access with authentication.
+* Await more db writes.
+* Disabled wtfnode dump by default.
+* Send `USER_NEWINFO` messages on reconnect.
+* Fixed loading in a hidden iframe.
+* Fixed a race condition with composition. (Thanks @ingoncalves for an exceptionally
+  detailed analysis and @rhansen for the fix.)
+
+# 1.8.13
+
+### Notable fixes
+
+* Fixed a bug in the safeRun.sh script (#4935)
+* Add more endpoints that do not need authentication/authorization (#4921)
+* Fixed issue with non-opening device keyboard on smartphones (#4929)
+* Add version string to iframe_editor.css to prevent stale cache entry (#4964)
+
+### Notable enhancements
+
+* Refactor pad loading (no document.write anymore) (#4960)
+* Improve import/export functionality, logging and tests (#4957)
+* Refactor CSS manager creation (#4963)
+* Better metrics
+* Add test for client height (#4965)
+
+### Dependencies
+
+* ueberDB2 1.3.2 -> 1.4.4
+* express-rate-limit 5.2.5 -> 5.2.6
+* etherpad-require-kernel 1.0.9 -> 1.0.11
+
+# 1.8.12
+
+Special mention: Thanks to Sauce Labs for additional testing tunnels to help us grow! :)
+
+### Security patches
+
+* Fixed a regression in v1.8.11 which caused some pad names to cause Etherpad to restart.
+
+### Notable fixes
+
+* Fixed a bug in the `dirty` database driver that sometimes caused Node.js to
+  crash during shutdown and lose buffered database writes.
+* Fixed a regression in v1.8.8 that caused "Uncaught TypeError: Cannot read
+  property '0' of undefined" with some plugins (#4885)
+* Less warnings in server console for supported element types on import.
+* Support Azure and other network share installations by using a 
+  more truthful relative path.
+
+### Notable enhancements
+
+* Dependency updates
+* Various Docker deployment improvements
+* Various new translations
+* Improvement of rendering of plugin hook list and error message handling
+
+# 1.8.11
+
+### Notable fixes
+
+* Fix server crash issue within PadMessageHandler due to SocketIO handling
+* Fix editor issue with drop downs not being visible
+* Ensure correct version is passed when loading front end resources
+* Ensure underscore and jquery are available in original location for plugin comptability
+
+### Notable enhancements
+
+* Improved page load speeds
+
+# 1.8.10
+
+### Security Patches
+
+* Resolve potential ReDoS vulnerability in your project - GHSL-2020-359
+
+### Compatibility changes
+
+* JSONP API has been removed in favor of using the mature OpenAPI implementation.
+* Node 14 is now required for Docker Deployments
+
+### Notable fixes
+
+* Various performance and stability fixes
+
+### Notable enhancements
+
+* Improved line number alignment and user experience around line anchors
+* Notification to admin console if a plugin is missing during user file import
+* Beautiful loading and reconnecting animation
+* Additional code quality improvements
+* Dependency updates
+
 # 1.8.9
 
 ### Notable fixes

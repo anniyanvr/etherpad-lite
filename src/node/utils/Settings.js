@@ -35,26 +35,14 @@ const argv = require('./Cli').argv;
 const jsonminify = require('jsonminify');
 const log4js = require('log4js');
 const randomString = require('./randomstring');
-const suppressDisableMsg = ' -- To suppress these warning messages change suppressErrorsInPadText to true in your settings.json\n';
+const suppressDisableMsg = ' -- To suppress these warning messages change ' +
+    'suppressErrorsInPadText to true in your settings.json\n';
 const _ = require('underscore');
 
 /* Root path of the installation */
 exports.root = absolutePaths.findEtherpadRoot();
-console.log(`All relative paths will be interpreted relative to the identified Etherpad base dir: ${exports.root}`);
-
-/*
- * At each start, Etherpad generates a random string and appends it as query
- * parameter to the URLs of the static assets, in order to force their reload.
- * Subsequent requests will be cached, as long as the server is not reloaded.
- *
- * For the rationale behind this choice, see
- * https://github.com/ether/etherpad-lite/pull/3958
- *
- * ACHTUNG: this may prevent caching HTTP proxies to work
- * TODO: remove the "?v=randomstring" parameter, and replace with hashed filenames instead
- */
-exports.randomVersionString = randomString(4);
-console.log(`Random string used for versioning assets: ${exports.randomVersionString}`);
+console.log('All relative paths will be interpreted relative to the identified ' +
+            `Etherpad base dir: ${exports.root}`);
 
 /**
  * The app title, visible e.g. in the browser window
@@ -62,11 +50,12 @@ console.log(`Random string used for versioning assets: ${exports.randomVersionSt
 exports.title = 'Etherpad';
 
 /**
- * The app favicon fully specified url, visible e.g. in the browser window
+ * Pathname of the favicon you want to use. If null, the skin's favicon is
+ * used if one is provided by the skin, otherwise the default Etherpad favicon
+ * is used. If this is a relative path it is interpreted as relative to the
+ * Etherpad root directory.
  */
-exports.favicon = 'favicon.ico';
-exports.faviconPad = `../${exports.favicon}`;
-exports.faviconTimeslider = `../../${exports.favicon}`;
+exports.favicon = null;
 
 /*
  * Skin name.
@@ -128,7 +117,14 @@ exports.dbSettings = {filename: path.join(exports.root, 'var/dirty.db')};
 /**
  * The default Text of a new pad
  */
-exports.defaultPadText = 'Welcome to Etherpad!\n\nThis pad text is synchronized as you type, so that everyone viewing this page sees the same text. This allows you to collaborate seamlessly on documents!\n\nEtherpad on Github: https:\/\/github.com\/ether\/etherpad-lite\n';
+exports.defaultPadText = [
+  'Welcome to Etherpad!',
+  '',
+  'This pad text is synchronized as you type, so that everyone viewing this page sees the same ' +
+      'text. This allows you to collaborate seamlessly on documents!',
+  '',
+  'Etherpad on Github: https://github.com/ether/etherpad-lite',
+].join('\n');
 
 /**
  * The default Pad Settings for a user (Can be overridden by changing the setting
@@ -145,7 +141,7 @@ exports.padOptions = {
   alwaysShowChat: false,
   chatAndUsers: false,
   lang: 'en-gb',
-},
+};
 
 /**
  * Whether certain shortcut keys are enabled for a user in the pad
@@ -173,7 +169,7 @@ exports.padShortcutEnabled = {
   ctrlHome: true,
   pageUp: true,
   pageDown: true,
-},
+};
 
 /**
  * The toolbar buttons and order.
@@ -254,6 +250,11 @@ exports.automaticReconnectionTimeout = 0;
  * Disable Load Testing
  */
 exports.loadTest = false;
+
+/**
+ * Disable dump of objects preventing a clean exit
+ */
+exports.dumpOnUncleanExit = false;
 
 /**
  * Enable indentation on new lines
@@ -465,7 +466,7 @@ exports.getEpVersion = () => require('../../package.json').version;
  * both "settings.json" and "credentials.json".
  */
 const storeSettings = (settingsObj) => {
-  for (const i in settingsObj) {
+  for (const i of Object.keys(settingsObj || {})) {
     // test if the setting starts with a lowercase character
     if (i.charAt(0).search('[a-z]') !== 0) {
       console.warn(`Settings should start with a lowercase character: '${i}'`);
@@ -474,7 +475,7 @@ const storeSettings = (settingsObj) => {
     // we know this setting, so we overwrite it
     // or it's a settings hash, specific to a plugin
     if (exports[i] !== undefined || i.indexOf('ep_') === 0) {
-      if (_.isObject(settingsObj[i]) && !_.isArray(settingsObj[i])) {
+      if (_.isObject(settingsObj[i]) && !Array.isArray(settingsObj[i])) {
         exports[i] = _.defaults(settingsObj[i], exports[i]);
       } else {
         exports[i] = settingsObj[i];
@@ -508,17 +509,13 @@ const coerceValue = (stringValue) => {
     return +stringValue;
   }
 
-  // the boolean literal case is easy.
-  if (stringValue === 'true') {
-    return true;
+  switch (stringValue) {
+    case 'true': return true;
+    case 'false': return false;
+    case 'undefined': return undefined;
+    case 'null': return null;
+    default: return stringValue;
   }
-
-  if (stringValue === 'false') {
-    return false;
-  }
-
-  // otherwise, return this value as-is
-  return stringValue;
 };
 
 /**
@@ -601,7 +598,10 @@ const lookupEnvironmentVariables = (obj) => {
     const defaultValue = match[3];
 
     if ((envVarValue === undefined) && (defaultValue === undefined)) {
-      console.warn(`Environment variable "${envVarName}" does not contain any value for configuration key "${key}", and no default was given. Returning null.`);
+      console.warn(`Environment variable "${envVarName}" does not contain any value for ` +
+                   `configuration key "${key}", and no default was given. Using null. ` +
+                   'THIS BEHAVIOR MAY CHANGE IN A FUTURE VERSION OF ETHERPAD; you should ' +
+                   'explicitly use "null" as the default if you want to continue to use null.');
 
       /*
        * We have to return null, because if we just returned undefined, the
@@ -611,7 +611,8 @@ const lookupEnvironmentVariables = (obj) => {
     }
 
     if ((envVarValue === undefined) && (defaultValue !== undefined)) {
-      console.debug(`Environment variable "${envVarName}" not found for configuration key "${key}". Falling back to default value.`);
+      console.debug(`Environment variable "${envVarName}" not found for ` +
+                    `configuration key "${key}". Falling back to default value.`);
 
       return coerceValue(defaultValue);
     }
@@ -622,7 +623,8 @@ const lookupEnvironmentVariables = (obj) => {
      * For numeric and boolean strings let's convert it to proper types before
      * returning it, in order to maintain backward compatibility.
      */
-    console.debug(`Configuration key "${key}" will be read from environment variable "${envVarName}"`);
+    console.debug(
+        `Configuration key "${key}" will be read from environment variable "${envVarName}"`);
 
     return coerceValue(envVarValue);
   });
@@ -676,7 +678,8 @@ const parseSettings = (settingsFilename, isSettings) => {
 
     return replacedSettings;
   } catch (e) {
-    console.error(`There was an error processing your ${settingsType} file from ${settingsFilename}: ${e.message}`);
+    console.error(`There was an error processing your ${settingsType} ` +
+                  `file from ${settingsFilename}: ${e.message}`);
 
     process.exit(1);
   }
@@ -703,7 +706,8 @@ exports.reloadSettings = () => {
   log4js.replaceConsole();
 
   if (!exports.skinName) {
-    console.warn('No "skinName" parameter found. Please check out settings.json.template and update your settings.json. Falling back to the default "colibris".');
+    console.warn('No "skinName" parameter found. Please check out settings.json.template and ' +
+                 'update your settings.json. Falling back to the default "colibris".');
     exports.skinName = 'colibris';
   }
 
@@ -713,7 +717,8 @@ exports.reloadSettings = () => {
     const countPieces = exports.skinName.split(path.sep).length;
 
     if (countPieces !== 1) {
-      console.error(`skinName must be the name of a directory under "${skinBasePath}". This is not valid: "${exports.skinName}". Falling back to the default "colibris".`);
+      console.error(`skinName must be the name of a directory under "${skinBasePath}". This is ` +
+                    `not valid: "${exports.skinName}". Falling back to the default "colibris".`);
 
       exports.skinName = 'colibris';
     }
@@ -723,14 +728,16 @@ exports.reloadSettings = () => {
 
     // what if someone sets skinName == ".." or "."? We catch him!
     if (absolutePaths.isSubdir(skinBasePath, skinPath) === false) {
-      console.error(`Skin path ${skinPath} must be a subdirectory of ${skinBasePath}. Falling back to the default "colibris".`);
+      console.error(`Skin path ${skinPath} must be a subdirectory of ${skinBasePath}. ` +
+                    'Falling back to the default "colibris".');
 
       exports.skinName = 'colibris';
       skinPath = path.join(skinBasePath, exports.skinName);
     }
 
     if (fs.existsSync(skinPath) === false) {
-      console.error(`Skin path ${skinPath} does not exist. Falling back to the default "colibris".`);
+      console.error(
+          `Skin path ${skinPath} does not exist. Falling back to the default "colibris".`);
       exports.skinName = 'colibris';
       skinPath = path.join(skinBasePath, exports.skinName);
     }
@@ -745,7 +752,7 @@ exports.reloadSettings = () => {
         if (!exists) {
           const abiwordError = 'Abiword does not exist at this path, check your settings file.';
           if (!exports.suppressErrorsInPadText) {
-            exports.defaultPadText = `${exports.defaultPadText}\nError: ${abiwordError}${suppressDisableMsg}`;
+            exports.defaultPadText += `\nError: ${abiwordError}${suppressDisableMsg}`;
           }
           console.error(`${abiwordError} File location: ${exports.abiword}`);
           exports.abiword = null;
@@ -757,10 +764,11 @@ exports.reloadSettings = () => {
   if (exports.soffice) {
     fs.exists(exports.soffice, (exists) => {
       if (!exists) {
-        const sofficeError = 'soffice (libreoffice) does not exist at this path, check your settings file.';
+        const sofficeError =
+            'soffice (libreoffice) does not exist at this path, check your settings file.';
 
         if (!exports.suppressErrorsInPadText) {
-          exports.defaultPadText = `${exports.defaultPadText}\nError: ${sofficeError}${suppressDisableMsg}`;
+          exports.defaultPadText += `\nError: ${sofficeError}${suppressDisableMsg}`;
         }
         console.error(`${sofficeError} File location: ${exports.soffice}`);
         exports.soffice = null;
@@ -774,18 +782,22 @@ exports.reloadSettings = () => {
       exports.sessionKey = fs.readFileSync(sessionkeyFilename, 'utf8');
       console.info(`Session key loaded from: ${sessionkeyFilename}`);
     } catch (e) {
-      console.info(`Session key file "${sessionkeyFilename}" not found. Creating with random contents.`);
+      console.info(
+          `Session key file "${sessionkeyFilename}" not found. Creating with random contents.`);
       exports.sessionKey = randomString(32);
       fs.writeFileSync(sessionkeyFilename, exports.sessionKey, 'utf8');
     }
   } else {
-    console.warn('Declaring the sessionKey in the settings.json is deprecated. This value is auto-generated now. Please remove the setting from the file. -- If you are seeing this error after restarting using the Admin User Interface then you can ignore this message.');
+    console.warn('Declaring the sessionKey in the settings.json is deprecated. ' +
+                 'This value is auto-generated now. Please remove the setting from the file. -- ' +
+                 'If you are seeing this error after restarting using the Admin User ' +
+                 'Interface then you can ignore this message.');
   }
 
   if (exports.dbType === 'dirty') {
     const dirtyWarning = 'DirtyDB is used. This is not recommended for production.';
     if (!exports.suppressErrorsInPadText) {
-      exports.defaultPadText = `${exports.defaultPadText}\nWarning: ${dirtyWarning}${suppressDisableMsg}`;
+      exports.defaultPadText += `\nWarning: ${dirtyWarning}${suppressDisableMsg}`;
     }
 
     exports.dbSettings.filename = absolutePaths.makeAbsolute(exports.dbSettings.filename);
@@ -794,8 +806,27 @@ exports.reloadSettings = () => {
 
   if (exports.ip === '') {
     // using Unix socket for connectivity
-    console.warn('The settings file contains an empty string ("") for the "ip" parameter. The "port" parameter will be interpreted as the path to a Unix socket to bind at.');
+    console.warn('The settings file contains an empty string ("") for the "ip" parameter. The ' +
+                 '"port" parameter will be interpreted as the path to a Unix socket to bind at.');
   }
+
+  /*
+   * At each start, Etherpad generates a random string and appends it as query
+   * parameter to the URLs of the static assets, in order to force their reload.
+   * Subsequent requests will be cached, as long as the server is not reloaded.
+   *
+   * For the rationale behind this choice, see
+   * https://github.com/ether/etherpad-lite/pull/3958
+   *
+   * ACHTUNG: this may prevent caching HTTP proxies to work
+   * TODO: remove the "?v=randomstring" parameter, and replace with hashed filenames instead
+   */
+  exports.randomVersionString = randomString(4);
+  console.log(`Random string used for versioning assets: ${exports.randomVersionString}`);
+};
+
+exports.exportedForTestingOnly = {
+  parseSettings,
 };
 
 // initially load settings

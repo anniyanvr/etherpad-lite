@@ -24,7 +24,7 @@
 
 // These jQuery things should create local references, but for now `require()`
 // assigns to the global `$` and augments it with plugins.
-require('./jquery');
+require('./vendors/jquery');
 
 const Cookies = require('./pad_utils').Cookies;
 const randomString = require('./pad_utils').randomString;
@@ -52,7 +52,7 @@ const init = () => {
       Cookies.set('token', token, {expires: 60});
     }
 
-    socket = socketio.connect(exports.baseURL);
+    socket = socketio.connect(exports.baseURL, '/', {query: {padId}});
 
     // send the ready message once we're connected
     socket.on('connect', () => {
