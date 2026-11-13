@@ -4,6 +4,7 @@
 			"Baonguyen21022003",
 			"Max20091",
 			"Minh Nguyen",
+			"NguoiDungKhongDinhDanh",
 			"Tuankiet65"
 		]
 	},
@@ -32,7 +33,7 @@
 	"pad.permissionDenied": "Bạn không có quyền truy cập pad này.",
 	"pad.settings.padSettings": "Tùy chọn Pad",
 	"pad.settings.myView": "Chỉ có tôi",
-	"pad.settings.stickychat": "Luân hiện cửa sổ trò chuyện trên màn hình",
+	"pad.settings.stickychat": "Luôn hiện cửa sổ trò chuyện trên màn hình",
 	"pad.settings.colorcheck": "Màu chỉ tác giả",
 	"pad.settings.linenocheck": "Số dòng",
 	"pad.settings.rtlcheck": "Đọc nội dung từ phải sang trái?",
@@ -48,7 +49,6 @@
 	"pad.importExport.exportword": "Microsoft Word",
 	"pad.importExport.exportpdf": "PDF",
 	"pad.importExport.exportopen": "ODF",
-	"pad.importExport.abiword.innerHTML": "Bạn chỉ có thể nhập vào từ văn bản thuần túy hay định dạng HTML. Nếu muốn có nhiều chức năng nhập hơn xin hãy <a href=\"https://github.com/ether/etherpad-lite/wiki/How-to-enable-importing-and-exporting-different-file-formats-in-Ubuntu-or-OpenSuse-or-SLES-with-AbiWord\">cài đặt abiword</a>.",
 	"pad.modals.connected": "Đã kết nối lại.",
 	"pad.modals.reconnecting": "Kết nối lại tới pad của bạn",
 	"pad.modals.forcereconnect": "Ép kết nối lại",
@@ -101,7 +101,7 @@
 	"timeslider.month.october": "Tháng Mười",
 	"timeslider.month.november": "Tháng Mười Một",
 	"timeslider.month.december": "Tháng Mười Hai",
-	"timeslider.unnamedauthors": "Không tên {{in a}} {[plural(num) một: tác giả, khác: tác giả]}",
+	"timeslider.unnamedauthors": "Không tên {{in a}} {[plural(num) one: tác giả, other: tác giả ]}",
 	"pad.savedrevs.marked": "Phiên bản này đã được đánh dấu là một phiên bản đã lưu",
 	"pad.userlist.entername": "Nhập tên của bạn",
 	"pad.userlist.unnamed": "Không tên",

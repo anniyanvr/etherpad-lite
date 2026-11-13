@@ -6,16 +6,13 @@ error() { log "ERROR: $@" >&2; }
 fatal() { error "$@"; exit 1; }
 try() { "$@" || fatal "'$@' failed"; }
 
-[ -n "${SAUCE_USERNAME}" ] || fatal "SAUCE_USERNAME is unset - exiting"
-[ -n "${SAUCE_ACCESS_KEY}" ] || fatal "SAUCE_ACCESS_KEY is unset - exiting"
-
 # Move to the Etherpad base directory.
 MY_DIR=$(try cd "${0%/*}" && try pwd -P) || exit 1
 try cd "${MY_DIR}/../../../.."
 
-log "Assuming src/bin/installDeps.sh has already been run"
-node src/node/server.js --experimental-worker "${@}" &
-ep_pid=$!
+log "Assuming bin/installDeps.sh has already been run"
+(cd src && npm run dev --experimental-worker "${@}" &
+ep_pid=$!)
 
 log "Waiting for Etherpad to accept connections (http://localhost:9001)..."
 connected=false
@@ -38,7 +35,6 @@ log "Starting the remote runner..."
 node remote_runner.js
 exit_code=$?
 
-kill "$(cat /tmp/sauce.pid)"
 kill "$ep_pid" && wait "$ep_pid"
 log "Done."
 exit "$exit_code"

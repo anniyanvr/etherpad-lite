@@ -2,9 +2,11 @@
 	"@metadata": {
 		"authors": [
 			"Anakmalaysia",
+			"Hakimi97",
 			"Jeluang Terluang"
 		]
 	},
+	"admin.page-title": "Papan muka Penyelia - Etherpad",
 	"index.newPad": "Pad baru",
 	"index.createOpenPad": "atau cipta/buka Pad yang bernama:",
 	"pad.toolbar.bold.title": "Tebal (Ctrl-B)",
@@ -39,6 +41,7 @@
 	"pad.settings.fontType": "Jenis fon:",
 	"pad.settings.fontType.normal": "Normal",
 	"pad.settings.language": "Bahasa:",
+	"pad.settings.poweredBy": "Dikuasakan oleh",
 	"pad.importExport.import_export": "Import/Eksport",
 	"pad.importExport.import": "Muat naik sebarang fail teks atau dokumen",
 	"pad.importExport.importSuccessful": "Berjaya!",
@@ -49,7 +52,6 @@
 	"pad.importExport.exportword": "Microsoft Word",
 	"pad.importExport.exportpdf": "PDF",
 	"pad.importExport.exportopen": "ODF (Open Document Format)",
-	"pad.importExport.abiword.innerHTML": "Anda hanya boleh mengimport dari format teks biasa atau html. Untuk ciri-ciri import yang lebih maju, sila <a href=\"https://github.com/ether/etherpad-lite/wiki/How-to-enable-importing-and-exporting-different-file-formats-in-Ubuntu-or-OpenSuse-or-SLES-with-AbiWord\">memasang abiword</a>.",
 	"pad.modals.connected": "Bersambung.",
 	"pad.modals.reconnecting": "Bersambung semula dengan pad anda...",
 	"pad.modals.forcereconnect": "Sambung semula secara paksa",
@@ -109,7 +111,7 @@
 	"pad.savedrevs.marked": "Semakan ini telah ditandai sebagai semakan tersimpan",
 	"pad.savedrevs.timeslider": "Anda boleh melihat semakan yang tersimpan dengan melawat gelangsar masa",
 	"pad.userlist.entername": "Taipkan nama anda",
-	"pad.userlist.unnamed": "tanpa nama",
+	"pad.userlist.unnamed": "tidak bernama",
 	"pad.editbar.clearcolors": "Padamkan warna pengarang pada seluruh dokumen?",
 	"pad.impexp.importbutton": "Import Sekarang",
 	"pad.impexp.importing": "Sedang mengimport...",

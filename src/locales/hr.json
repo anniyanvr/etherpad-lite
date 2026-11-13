@@ -2,7 +2,8 @@
 	"@metadata": {
 		"authors": [
 			"Bugoslav",
-			"Hmxhmx"
+			"Hmxhmx",
+			"Ponor"
 		]
 	},
 	"index.newPad": "Novi blokić",
@@ -52,7 +53,6 @@
 	"pad.importExport.exportword": "Datoteku programa Microsoft Word",
 	"pad.importExport.exportpdf": "Datoteku Acrobatova PDF formata",
 	"pad.importExport.exportopen": "Datoteku formata Open Document (ODF)",
-	"pad.importExport.abiword.innerHTML": "Možete uvoziti samo datoteke formata za obični tekst (bez oblikovanja) te datoteke u formatima HTML-a. Za naprednije mogućnosti uvoza, molimo Vas, instalirajte <a href=\"https://github.com/ether/etherpad-lite/wiki/How-to-enable-importing-and-exporting-different-file-formats-with-AbiWord\">program AbiWord ili LibreOffice</a>.",
 	"pad.modals.connected": "Povezano.",
 	"pad.modals.reconnecting": "Ponovo Vas povezujemo s Vašim blokićem...",
 	"pad.modals.forcereconnect": "Prisilno se ponovo poveži",
@@ -89,7 +89,7 @@
 	"pad.chat.title": "Otvori čavrljanje uz ovaj blokić.",
 	"pad.chat.loadmessages": "Učitaj više poruka",
 	"pad.chat.stick.title": "Prilijepi razgovor na zaslon",
-	"pad.chat.writeMessage.placeholder": "Napišite Vašu poruku ovdje",
+	"pad.chat.writeMessage.placeholder": "Ovdje napišite svoju poruku",
 	"timeslider.followContents": "Prati ažuriranja sadržaja blokića",
 	"timeslider.pageTitle": "{{appTitle}} Vremenska lenta",
 	"timeslider.toolbar.returnbutton": "Vrati se natrag na blokić",
@@ -115,7 +115,7 @@
 	"timeslider.month.october": "listopada",
 	"timeslider.month.november": "studenoga",
 	"timeslider.month.december": "prosinca",
-	"timeslider.unnamedauthors": "{{num}} {[plural(num) one: neimenovani autor, plural(num) two: neimenovana autora, plural(num) other: neimenovanih autora ]}",
+	"timeslider.unnamedauthors": "{{num}} {[plural(num) one: neimenovani autor, two: neimenovana autora, other: neimenovanih autora ]}",
 	"pad.savedrevs.marked": "Ova inačica označena je sada kao spremljena inačica",
 	"pad.savedrevs.timeslider": "Možete vidjeti spremljene inačice rabeći vremensku lentu (timeslider)",
 	"pad.userlist.entername": "Unesite Vaše suradničko ime",
@@ -127,6 +127,7 @@
 	"pad.impexp.convertFailed": "Nismo bili u mogućnosti uvesti tu datoteku. Molimo Vas, rabite neki drugi format dokumenta ili ručno preslikajte/zalijepite sadržaj",
 	"pad.impexp.padHasData": "Nismo bili u mogućnosti uvesti navedenu datoteku, jer je blokić već bio mijenjan, molimo Vas uvezite u novi blokić",
 	"pad.impexp.uploadFailed": "Postavljanje nije uspjelo. molimo Vas, pokušajte ponovo",
+	"pad.impexp.permission": "Uvoz je onemogućen jer niste doprinosili ovom blokiću Etherpada. Molimo Vas, doprinosite barem jednom prije radnje uvoza",
 	"pad.impexp.importfailed": "Uvoz nije uspio",
 	"pad.impexp.copypaste": "Molimo preslikajte/zalijepite",
 	"pad.impexp.exportdisabled": "Izvoz u formatu {{type}} nije omogućen. Molimo Vas, kontaktirajte Vašega administratora sustava za više pojedinosti.",

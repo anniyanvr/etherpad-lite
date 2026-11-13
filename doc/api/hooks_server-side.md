@@ -1,8 +1,9 @@
 # Server-side hooks
+
 These hooks are called on server-side.
 
 ## loadSettings
-Called from: src/node/server.js
+Called from: `src/node/server.js`
 
 Things in context:
 
@@ -11,7 +12,7 @@ Things in context:
 Use this hook to receive the global settings in your plugin.
 
 ## shutdown
-Called from: src/node/server.js
+Called from: `src/node/server.js`
 
 Things in context: None
 
@@ -33,7 +34,7 @@ exports.shutdown = async (hookName, context) => {
 ```
 
 ## pluginUninstall
-Called from: src/static/js/pluginfw/installer.js
+Called from: `src/static/js/pluginfw/installer.js`
 
 Things in context:
 
@@ -42,7 +43,7 @@ Things in context:
 If this hook returns an error, the callback to the uninstall function gets an error as well. This mostly seems useful for handling additional features added in based on the installation of other plugins, which is pretty cool!
 
 ## pluginInstall
-Called from: src/static/js/pluginfw/installer.js
+Called from: `src/static/js/pluginfw/installer.js`
 
 Things in context:
 
@@ -50,35 +51,78 @@ Things in context:
 
 If this hook returns an error, the callback to the install function gets an error, too. This seems useful for adding in features when a particular plugin is installed.
 
-## init_`<plugin name>`
-Called from: src/static/js/pluginfw/plugins.js
+## `init_<plugin name>`
 
-Things in context: None
+Called from: `src/static/js/pluginfw/plugins.js`
 
-This function is called after a specific plugin is initialized. This would probably be more useful than the previous two functions if you only wanted to add in features to one specific plugin.
+Run during startup after the named plugin is initialized.
 
-## expressConfigure
-Called from: src/node/hooks/express.js
+Context properties:
 
-Things in context:
+* `logger`: An object with the following `console`-like methods: `debug`,
+  `info`, `log`, `warn`, `error`.
 
-1. app - the main application object
+## `expressPreSession`
 
-This is a helpful hook for changing the behavior and configuration of the application. It's called right after the application gets configured.
+Called from: `src/node/hooks/express.js`
 
-## expressCreateServer
-Called from: src/node/hooks/express.js
+Called during server startup just before the
+[`express-session`](https://www.npmjs.com/package/express-session) middleware is
+added to the Express Application object. Use this hook to add route handlers or
+middleware that executes before `express-session` state is created and
+authentication is performed. This is useful for creating public endpoints that
+don't spam the database with new `express-session` records or trigger
+authentication.
 
-Things in context:
+**WARNING:** All handlers registered during this hook run before the built-in
+authentication checks, so any handled endpoints will be public unless the
+handler itself authenticates the user.
 
-1. app - the main express application object (helpful for adding new paths and such)
-2. server - the http server object
+Context properties:
 
-This hook gets called after the application object has been created, but before it starts listening. This is similar to the expressConfigure hook, but it's not guaranteed that the application object will have all relevant configuration variables.
+* `app`: The Express [Application](https://expressjs.com/en/4x/api.html#app)
+  object.
+
+Example:
+
+```javascript
+exports.expressPreSession = async (hookName, {app}) => {
+  app.get('/hello-world', (req, res) => res.send('hello world'));
+};
+```
+
+## `expressConfigure`
+
+Called from: `src/node/hooks/express.js`
+
+Called during server startup just after the
+[`express-session`](https://www.npmjs.com/package/express-session) middleware is
+added to the Express Application object. Use this hook to add route handlers or
+middleware that executes after `express-session` state is created and
+authentication is performed.
+
+Context properties:
+
+* `app`: The Express [Application](https://expressjs.com/en/4x/api.html#app)
+  object.
+
+## `expressCreateServer`
+
+Called from: `src/node/hooks/express.js`
+
+Identical to the `expressConfigure` hook (the two run in parallel with each
+other) except this hook's context includes the HTTP Server object.
+
+Context properties:
+
+* `app`: The Express [Application](https://expressjs.com/en/4x/api.html#app)
+  object.
+* `server`: The [http.Server](https://nodejs.org/api/http.html#class-httpserver)
+  or [https.Server](https://nodejs.org/api/https.html#class-httpsserver) object.
 
 ## expressCloseServer
 
-Called from: src/node/hooks/express.js
+Called from: `src/node/hooks/express.js`
 
 Things in context: Nothing
 
@@ -96,7 +140,7 @@ exports.expressCloseServer = async () => {
 ```
 
 ## eejsBlock_`<name>`
-Called from: src/node/eejs/index.js
+Called from: `src/node/eejs/index.js`
 
 Things in context:
 
@@ -106,40 +150,40 @@ This hook gets called upon the rendering of an ejs template block. For any speci
 
 Available blocks in `pad.html` are:
 
- * `htmlHead` - after `<html>` and immediately before the title tag
- * `styles` - the style `<link>`s
- * `body` - the contents of the body tag
- * `editbarMenuLeft` - the left tool bar (consider using the toolbar controller instead of manually adding html here)
- * `editbarMenuRight` - right tool bar
- * `afterEditbar` - allows you to add stuff immediately after the toolbar
- * `userlist` - the contents of the userlist dropdown
- * `loading` - the initial loading message
- * `mySettings` - the left column of the settings dropdown ("My view"); intended for adding checkboxes only
- * `mySettings.dropdowns` - add your dropdown settings here
- * `globalSettings` - the right column of the settings dropdown ("Global view")
- * `importColumn` - import form
- * `exportColumn` - export form
- * `modals` - Contains all connectivity messages
- * `embedPopup` - the embed dropdown
- * `scripts` - Add your script tags here, if you really have to (consider use client-side hooks instead)
+* `htmlHead` - after `<html>` and immediately before the title tag
+* `styles` - the style `<link>`s
+* `body` - the contents of the body tag
+* `editbarMenuLeft` - the left tool bar (consider using the toolbar controller instead of manually adding html here)
+* `editbarMenuRight` - right tool bar
+* `afterEditbar` - allows you to add stuff immediately after the toolbar
+* `userlist` - the contents of the userlist dropdown
+* `loading` - the initial loading message
+* `mySettings` - the left column of the settings dropdown ("My view"); intended for adding checkboxes only
+* `mySettings.dropdowns` - add your dropdown settings here
+* `globalSettings` - the right column of the settings dropdown ("Global view")
+* `importColumn` - import form
+* `exportColumn` - export form
+* `modals` - Contains all connectivity messages
+* `embedPopup` - the embed dropdown
+* `scripts` - Add your script tags here, if you really have to (consider use client-side hooks instead)
 
 `timeslider.html` blocks:
 
- * `timesliderStyles`
- * `timesliderScripts`
- * `timesliderBody`
- * `timesliderTop`
- * `timesliderEditbarRight`
- * `modals`
+* `timesliderStyles`
+* `timesliderScripts`
+* `timesliderBody`
+* `timesliderTop`
+* `timesliderEditbarRight`
+* `modals`
 
 `index.html` blocks:
 
- * `indexCustomStyles` - contains the `index.css` `<link>` tag, allows you to add your own or to customize the one provided by the active skin
- * `indexWrapper` - contains the form for creating new pads
- * `indexCustomScripts` - contains the `index.js` `<script>` tag, allows you to add your own or to customize the one provided by the active skin
+* `indexCustomStyles` - contains the `index.css` `<link>` tag, allows you to add your own or to customize the one provided by the active skin
+* `indexWrapper` - contains the form for creating new pads
+* `indexCustomScripts` - contains the `index.js` `<script>` tag, allows you to add your own or to customize the one provided by the active skin
 
 ## padInitToolbar
-Called from: src/node/hooks/express/specialpages.js
+Called from: `src/node/hooks/express/specialpages.js`
 
 Things in context:
 
@@ -152,76 +196,191 @@ Usage examples:
 * https://github.com/tiblu/ep_authorship_toggle
 
 ## onAccessCheck
-Called from: src/node/db/SecurityManager.js
+Called from: `src/node/db/SecurityManager.js`
 
 Things in context:
 
-1. padID - the pad the user wants to access
+1. padID - the real ID (never the read-only ID) of the pad the user wants to
+   access
 2. token - the token of the author
 3. sessionCookie - the session the use has
 
-This hook gets called when the access to the concrete pad is being checked. Return `false` to deny access.
+This hook gets called when the access to the concrete pad is being checked.
+Return `false` to deny access.
 
-## padCreate
-Called from: src/node/db/Pad.js
+## `getAuthorId`
 
-Things in context:
+Called from `src/node/db/AuthorManager.js`
 
-1. pad - the pad instance
-2. author - the id of the author who created the pad
+Called when looking up (or creating) the author ID for a user, except for author
+IDs obtained via the HTTP API. Registered hook functions are called until one
+returns a non-`undefined` value. If a truthy value is returned by a hook
+function, it is used as the user's author ID. Otherwise, the value of the
+`dbKey` context property is used to look up the author ID. If there is no such
+author ID at that key, a new author ID is generated and associated with that
+key.
 
-This hook gets called when a new pad was created.
+Context properties:
 
-## padLoad
-Called from: src/node/db/Pad.js
+* `dbKey`: Database key to use when looking up the user's author ID if no hook
+  function returns an author ID. This is initialized to the user-supplied token
+  value (see the `token` context property), but hook functions can modify this
+  to control how author IDs are allocated to users. If no author ID is
+  associated with this database key, a new author ID will be randomly generated
+  and associated with the key. For security reasons, if this is modified it
+  should be modified to not look like a valid token (see the `token` context
+  property) unless the plugin intentionally wants the user to be able to
+  impersonate another user.
+* `token`: The user-supplied token, or nullish for an anonymous user. Tokens are
+  secret values that must not be disclosed to others. If non-null, the token is
+  guaranteed to be a string with the form `t.<base64url>` where `<base64url>` is
+  any valid non-empty base64url string (RFC 4648 section 5 with padding).
+  Example: `t.twim3X2_KGiRj8cJ-3602g==`.
+* `user`: If the user has authenticated, this is an object from `settings.users`
+  (or similar from an authentication plugin). Etherpad core and all good
+  authentication plugins set the `username` property of this object to a string
+  that uniquely identifies the authenticated user. This object is nullish if the
+  user has not authenticated.
 
-Things in context:
+Example:
 
-1. pad - the pad instance
+```javascript
+exports.getAuthorId = async (hookName, context) => {
+  const {username} = context.user || {};
+  // If the user has not authenticated, or has "authenticated" as the guest
+  // user, do the default behavior (try another plugin if any, falling through
+  // to using the token as the database key).
+  if (!username || username === 'guest') return;
+  // The user is authenticated and has a username. Give the user a stable author
+  // ID so that they appear to be the same author even after clearing cookies or
+  // accessing the pad from another device. Note that this string is guaranteed
+  // to never have the form of a valid token; without that guarantee an
+  // unauthenticated user might be able to impersonate an authenticated user.
+  context.dbKey = `username=${username}`;
+  // Return a falsy but non-undefined value to stop Etherpad from calling any
+  // more getAuthorId hook functions and look up the author ID using the
+  // username-derived database key.
+  return '';
+};
+```
 
-This hook gets called when a pad was loaded. If a new pad was created and loaded this event will be emitted too.
+## `padCreate`
 
-## padUpdate
-Called from: src/node/db/Pad.js
+Called from: `src/node/db/Pad.js`
 
-Things in context:
+Called when a new pad is created.
 
-1. pad - the pad instance
-2. author - the id of the author who updated the pad
-3. revs - the index of the new revision
-4. changeset - the changeset of this revision (see [Changeset Library](#index_changeset_library))
+Context properties:
 
-This hook gets called when an existing pad was updated.
+* `pad`: The Pad object.
+* `authorId`: The ID of the author who created the pad.
+* `author` (**deprecated**): Synonym of `authorId`.
 
-## padCopy
-Called from: src/node/db/Pad.js
+## `padDefaultContent`
 
-Things in context:
+Called from `src/node/db/Pad.js`
 
-1. originalPad - the source pad instance
-2. destinationID - the id of the pad copied from originalPad
+Called to obtain a pad's initial content, unless the pad is being created with
+specific content. The return value is ignored; to change the content, modify the
+`content` context property.
 
-This hook gets called when an existing pad was copied.
+This hook is run asynchronously. All registered hook functions are run
+concurrently (via `Promise.all()`), so be careful to avoid race conditions when
+reading and modifying the context properties.
+
+Context properties:
+
+* `pad`: The newly created Pad object.
+* `authorId`: The author ID of the user that is creating the pad.
+* `type`: String identifying the content type. Currently this is `'text'` and
+  must not be changed. Future versions of Etherpad may add support for HTML,
+  jsdom objects, or other formats, so plugins must assert that this matches a
+  supported content type before reading `content`.
+* `content`: The pad's initial content. Change this property to change the pad's
+  initial content. If the content type is changed, the `type` property must also
+  be updated to match. Plugins must check the value of the `type` property
+  before reading this value.
+
+## `padLoad`
+
+Called from: `src/node/db/PadManager.js`
+
+Called when a pad is loaded, including after new pad creation.
+
+Context properties:
+
+* `pad`: The Pad object.
+
+## `padUpdate`
+
+Called from: `src/node/db/Pad.js`
+
+Called when an existing pad is updated.
+
+Context properties:
+
+* `pad`: The Pad object.
+* `authorId`: The ID of the author who updated the pad.
+* `author` (**deprecated**): Synonym of `authorId`.
+* `revs`: The index of the new revision.
+* `changeset`: The changeset of this revision (see [Changeset
+  Library](#index_changeset_library)).
+
+## `padCopy`
+
+Called from: `src/node/db/Pad.js`
+
+Called when a pad is copied so that plugins can copy plugin-specific database
+records or perform some other plugin-specific initialization.
+
+Order of events when a pad is copied:
+
+1. Destination pad is deleted if it exists and overwrite is permitted. This
+   causes the `padRemove` hook to run.
+2. Pad-specific database records are copied in the database, except for
+   records with plugin-specific database keys.
+3. A new Pad object is created for the destination pad. This causes the
+   `padLoad` hook to run.
+4. This hook runs.
+
+Context properties:
+
+* `srcPad`: The source Pad object.
+* `dstPad`: The destination Pad object.
 
 Usage examples:
 
-* https://github.com/ether/ep_comments
+* https://github.com/ether/ep_comments_page
 
-## padRemove
-Called from: src/node/db/Pad.js
+## `padRemove`
 
-Things in context:
+Called from: `src/node/db/Pad.js`
 
-1. padID
+Called when an existing pad is removed/deleted. Plugins should use this to clean
+up any plugin-specific pad records from the database.
 
-This hook gets called when an existing pad was removed/deleted.
+Context properties:
+
+* `pad`: Pad object for the pad that is being deleted.
 
 Usage examples:
 
-* https://github.com/ether/ep_comments
+* https://github.com/ether/ep_comments_page
+
+## `padCheck`
+
+Called from: `src/node/db/Pad.js`
+
+Called when a consistency check is run on a pad, after the core checks have
+completed successfully. An exception should be thrown if the pad is faulty in
+some way.
+
+Context properties:
+
+* `pad`: The Pad object that is being checked.
 
 ## socketio
-Called from: src/node/hooks/express/socketio.js
+Called from: `src/node/hooks/express/socketio.js`
 
 Things in context:
 
@@ -231,52 +390,57 @@ Things in context:
 
 I have no idea what this is useful for, someone else will have to add this description.
 
-## preAuthorize
-Called from: src/node/hooks/express/webaccess.js
+## `preAuthorize`
 
-Things in context:
+Called from: `src/node/hooks/express/webaccess.js`
 
-1. req - the request object
-2. res - the response object
-3. next - bypass callback. If this is called instead of the normal callback then
-   all remaining access checks are skipped.
+Called for each HTTP request before any authentication checks are performed. The
+registered `preAuthorize` hook functions are called one at a time until one
+explicitly grants or denies the request by returning `true` or `false`,
+respectively. If none of the hook functions return anything, the access decision
+is deferred to the normal authentication and authorization checks.
 
-This hook is called for each HTTP request before any authentication checks are
-performed. Example uses:
+Example uses:
 
 * Always grant access to static content.
 * Process an OAuth callback.
 * Drop requests from IP addresses that have failed N authentication checks
   within the past X minutes.
 
-A preAuthorize function is always called for each request unless a preAuthorize
-function from another plugin (if any) has already explicitly granted or denied
-the request.
+Return values:
 
-You can pass the following values to the provided callback:
+* `undefined` (or `[]`) defers the access decision to the next registered
+  `preAuthorize` hook function, or to the normal authentication and
+  authorization checks if no more `preAuthorize` hook functions remain.
+* `true` (or `[true]`) immediately grants access to the requested resource,
+  unless the request is for an `/admin` page in which case it is treated the
+  same as returning `undefined`. (This prevents buggy plugins from accidentally
+  granting admin access to the general public.)
+* `false` (or `[false]`) immediately denies the request. The `preAuthnFailure`
+  hook will be called to handle the failure.
 
-* `[]` defers the access decision to the normal authentication and authorization
-  checks (or to a preAuthorize function from another plugin, if one exists).
-* `[true]` immediately grants access to the requested resource, unless the
-  request is for an `/admin` page in which case it is treated the same as `[]`.
-  (This prevents buggy plugins from accidentally granting admin access to the
-  general public.)
-* `[false]` immediately denies the request. The preAuthnFailure hook will be
-  called to handle the failure.
+Context properties:
+
+* `req`: The Express [Request](https://expressjs.com/en/4x/api.html#req) object.
+* `res`: The Express [Response](https://expressjs.com/en/4x/api.html#res)
+  object.
+* `next`: Callback to immediately hand off handling to the next Express
+  middleware/handler, or to the next matching route if `'route'` is passed as
+  the first argument. Do not call this unless you understand the consequences.
 
 Example:
 
-```
-exports.preAuthorize = (hookName, context, cb) => {
-  if (ipAddressIsFirewalled(context.req)) return cb([false]);
-  if (requestIsForStaticContent(context.req)) return cb([true]);
-  if (requestIsForOAuthCallback(context.req)) return cb([true]);
-  return cb([]);
+```javascript
+exports.preAuthorize = async (hookName, {req}) => {
+  if (await ipAddressIsFirewalled(req)) return false;
+  if (requestIsForStaticContent(req)) return true;
+  if (requestIsForOAuthCallback(req)) return true;
+  // Defer the decision to the next step by returning undefined.
 };
 ```
 
 ## authorize
-Called from: src/node/hooks/express/webaccess.js
+Called from: `src/node/hooks/express/webaccess.js`
 
 Things in context:
 
@@ -321,7 +485,7 @@ You can pass the following values to the provided callback:
 
 Example:
 
-```
+```js
 exports.authorize = (hookName, context, cb) => {
   const user = context.req.session.user;
   const path = context.req.path;  // or context.resource
@@ -332,7 +496,7 @@ exports.authorize = (hookName, context, cb) => {
 ```
 
 ## authenticate
-Called from: src/node/hooks/express/webaccess.js
+Called from: `src/node/hooks/express/webaccess.js`
 
 Things in context:
 
@@ -369,7 +533,7 @@ object should come from global settings (`context.users[username]`).
 
 Example:
 
-```
+```js
 exports.authenticate = (hook_name, context, cb) => {
   if (notApplicableToThisPlugin(context)) {
     return cb([]);  // Let the next authentication plugin decide
@@ -389,7 +553,7 @@ exports.authenticate = (hook_name, context, cb) => {
 ```
 
 ## authFailure
-Called from: src/node/hooks/express/webaccess.js
+Called from: `src/node/hooks/express/webaccess.js`
 
 Things in context:
 
@@ -423,7 +587,7 @@ failure or a generic 403 page for an authorization failure).
 
 Example:
 
-```
+```js
 exports.authFailure = (hookName, context, cb) => {
   if (notApplicableToThisPlugin(context)) {
     return cb([]);  // Let the next plugin handle the error
@@ -434,7 +598,7 @@ exports.authFailure = (hookName, context, cb) => {
 ```
 
 ## preAuthzFailure
-Called from: src/node/hooks/express/webaccess.js
+Called from: `src/node/hooks/express/webaccess.js`
 
 Things in context:
 
@@ -454,7 +618,7 @@ another plugin (if any, otherwise fall back to a generic 403 error page).
 
 Example:
 
-```
+```js
 exports.preAuthzFailure = (hookName, context, cb) => {
   if (notApplicableToThisPlugin(context)) return cb([]);
   context.res.status(403).send(renderFancy403Page(context.req));
@@ -463,7 +627,7 @@ exports.preAuthzFailure = (hookName, context, cb) => {
 ```
 
 ## authnFailure
-Called from: src/node/hooks/express/webaccess.js
+Called from: `src/node/hooks/express/webaccess.js`
 
 Things in context:
 
@@ -486,7 +650,7 @@ another plugin (if any, otherwise fall back to the deprecated authFailure hook).
 
 Example:
 
-```
+```js
 exports.authnFailure = (hookName, context, cb) => {
   if (notApplicableToThisPlugin(context)) return cb([]);
   context.res.redirect(makeLoginURL(context.req));
@@ -495,7 +659,7 @@ exports.authnFailure = (hookName, context, cb) => {
 ```
 
 ## authzFailure
-Called from: src/node/hooks/express/webaccess.js
+Called from: `src/node/hooks/express/webaccess.js`
 
 Things in context:
 
@@ -514,7 +678,7 @@ another plugin (if any, otherwise fall back to the deprecated authFailure hook).
 
 Example:
 
-```
+```js
 exports.authzFailure = (hookName, context, cb) => {
   if (notApplicableToThisPlugin(context)) return cb([]);
   if (needsPremiumAccount(context.req) && !context.req.session.user.premium) {
@@ -526,26 +690,29 @@ exports.authzFailure = (hookName, context, cb) => {
 };
 ```
 
-## handleMessage
-Called from: src/node/handler/PadMessageHandler.js
+## `handleMessage`
 
-Things in context:
-
-1. message - the message being handled
-2. socket - the socket.io Socket object
-3. client - **deprecated** synonym of socket
+Called from: `src/node/handler/PadMessageHandler.js`
 
 This hook allows plugins to drop or modify incoming socket.io messages from
-clients, before Etherpad processes them.
+clients, before Etherpad processes them. If any hook function returns `null`
+then the message will not be subject to further processing.
 
-The handleMessage function must return a Promise. If the Promise resolves to
-`null`, the message is dropped. Returning `callback(value)` will return a
-Promise that is resolved to `value`.
+Context properties:
 
-Examples:
+* `message`: The message being handled.
+* `sessionInfo`: Object describing the socket.io session with the following
+  properties:
+    * `authorId`: The user's author ID.
+    * `padId`: The real (not read-only) ID of the pad.
+    * `readOnly`: Whether the client has read-only access (true) or read/write
+      access (false).
+* `socket`: The socket.io Socket object.
+* `client`: (**Deprecated**; use `socket` instead.) Synonym of `socket`.
 
-```
-// Using an async function:
+Example:
+
+```javascript
 exports.handleMessage = async (hookName, {message, socket}) => {
   if (message.type === 'USERINFO_UPDATE') {
     // Force the display name to the name associated with the account.
@@ -553,56 +720,52 @@ exports.handleMessage = async (hookName, {message, socket}) => {
     if (user.name) message.data.userInfo.name = user.name;
   }
 };
-
-// Using a regular function:
-exports.handleMessage = (hookName, {message, socket}, callback) => {
-  if (message.type === 'USERINFO_UPDATE') {
-    // Force the display name to the name associated with the account.
-    const user = socket.client.request.session.user || {};
-    if (user.name) message.data.userInfo.name = user.name;
-  }
-  return callback();
-};
 ```
 
-## handleMessageSecurity
-Called from: src/node/handler/PadMessageHandler.js
+## `handleMessageSecurity`
 
-Things in context:
+Called from: `src/node/handler/PadMessageHandler.js`
 
-1. message - the message being handled
-2. socket - the socket.io Socket object
-3. client - **deprecated** synonym of socket
+Called for each incoming message from a client. Allows plugins to grant
+temporary write access to a pad.
 
-This hook allows plugins to grant temporary write access to a pad. It is called
-for each incoming message from a client. If write access is granted, it applies
-to the current message and all future messages from the same socket.io
-connection until the next `CLIENT_READY` or `SWITCH_TO_PAD` message. Read-only
-access is reset **after** each `CLIENT_READY` or `SWITCH_TO_PAD` message, so
-granting write access has no effect for those message types.
+Supported return values:
 
-The handleMessageSecurity function must return a Promise. If the Promise
-resolves to `true`, write access is granted as described above. Returning
-`callback(value)` will return a Promise that is resolved to `value`.
+* `undefined`: No change in access status.
+* `'permitOnce'`: Override the user's read-only access for the current
+  `COLLABROOM` message only. Has no effect if the current message is not a
+  `COLLABROOM` message, or if the user already has write access to the pad.
+* `true`: (**Deprecated**; return `'permitOnce'` instead.) Override the user's
+  read-only access for all `COLLABROOM` messages from the same socket.io
+  connection (including the current message, if applicable) until the client's
+  next `CLIENT_READY` message. Has no effect if the user already has write
+  access to the pad. Read-only access is reset **after** each `CLIENT_READY`
+  message, so returning `true` has no effect for `CLIENT_READY` messages.
 
-Examples:
+Context properties:
 
-```
-// Using an async function:
-exports.handleMessageSecurity = async (hookName, {message, socket}) => {
-  if (shouldGrantWriteAccess(message, socket)) return true;
-  return;
-};
+* `message`: The message being handled.
+* `sessionInfo`: Object describing the socket.io connection with the following
+  properties:
+    * `authorId`: The user's author ID.
+    * `padId`: The real (not read-only) ID of the pad.
+    * `readOnly`: Whether the client has read-only access (true) or read/write
+      access (false).
+* `socket`: The socket.io Socket object.
+* `client`: (**Deprecated**; use `socket` instead.) Synonym of `socket`.
 
-// Using a regular function:
-exports.handleMessageSecurity = (hookName, {message, socket}, callback) => {
-  if (shouldGrantWriteAccess(message, socket)) return callback(true);
-  return callback();
+Example:
+
+```javascript
+exports.handleMessageSecurity = async (hookName, context) => {
+  const {message, sessionInfo: {readOnly}} = context;
+  if (!readOnly || message.type !== 'COLLABROOM') return;
+  if (await messageIsBenign(message)) return 'permitOnce';
 };
 ```
 
 ## clientVars
-Called from: src/node/handler/PadMessageHandler.js
+Called from: `src/node/handler/PadMessageHandler.js`
 
 Things in context:
 
@@ -615,21 +778,21 @@ is sent to the client. Plugins can use this hook to manipulate the
 configuration. (Example: Add a tracking ID for an external analytics tool that
 is used client-side.)
 
-The clientVars function must return a Promise that resolves to an object (or
-null/undefined) whose properties will be merged into `context.clientVars`.
-Returning `callback(value)` will return a Promise that is resolved to `value`.
-
-You can modify `context.clientVars` to change the values sent to the client, but
-beware: async functions from other clientVars plugins might also be reading or
-manipulating the same `context.clientVars` object. For this reason it is
-recommended you return an object rather than modify `context.clientVars`.
+You can manipulate `clientVars` in two different ways:
+* Return an object. The object will be merged into `clientVars` via
+  `Object.assign()`, so any keys that already exist in `clientVars` will be
+  overwritten by the values in the returned object.
+* Modify `context.clientVars`. Beware: Other plugins might also be reading or
+  manipulating the same `context.clientVars` object. To avoid race conditions,
+  you are encouraged to return an object rather than modify
+  `context.clientVars`.
 
 If needed, you can access the user's account information (if authenticated) via
 `context.socket.client.request.session.user`.
 
 Examples:
 
-```
+```js
 // Using an async function
 exports.clientVars = async (hookName, context) => {
   const user = context.socket.client.request.session.user || {};
@@ -643,45 +806,40 @@ exports.clientVars = (hookName, context, callback) => {
 };
 ```
 
-This can be accessed on the client-side using `clientVars.currentYear`.
+## `getLineHTMLForExport`
 
-## getLineHTMLForExport
-Called from: src/node/utils/ExportHtml.js
+Called from: `src/node/utils/ExportHtml.js`
 
-Things in context:
+This hook will allow a plug-in developer to re-write each line when exporting to
+HTML.
 
-1. apool - pool object
-2. attribLine - line attributes
-3. text - line text
+Context properties:
 
-This hook will allow a plug-in developer to re-write each line when exporting to HTML.
+* `apool`: Pool object.
+* `attribLine`: Line attributes.
+* `line`:
+* `lineContent`:
+* `text`: Line text.
+* `padId`: Writable (not read-only) pad identifier.
 
 Example:
-```
-var Changeset = require("ep_etherpad-lite/static/js/Changeset");
 
-exports.getLineHTMLForExport = function (hook, context) {
-  var header = _analyzeLine(context.attribLine, context.apool);
-  if (header) {
-    return "<" + header + ">" + context.lineContent + "</" + header + ">";
-  }
-}
+```javascript
+const AttributeMap = require('ep_etherpad-lite/static/js/AttributeMap');
+const Changeset = require('ep_etherpad-lite/static/js/Changeset');
 
-function _analyzeLine(alineAttrs, apool) {
-  var header = null;
-  if (alineAttrs) {
-    var opIter = Changeset.opIterator(alineAttrs);
-    if (opIter.hasNext()) {
-      var op = opIter.next();
-      header = Changeset.opAttributeValue(op, 'heading', apool);
-    }
-  }
-  return header;
-}
+exports.getLineHTMLForExport = async (hookName, context) => {
+  if (!context.attribLine) return;
+  const [op] = Changeset.deserializeOps(context.attribLine);
+  if (op == null) return;
+  const heading = AttributeMap.fromString(op.attribs, context.apool).get('heading');
+  if (!heading) return;
+  context.lineContent = `<${heading}>${context.lineContent}</${heading}>`;
+};
 ```
 
 ## exportHTMLAdditionalContent
-Called from: src/node/utils/ExportHtml.js
+Called from: `src/node/utils/ExportHtml.js`
 
 Things in context:
 
@@ -692,14 +850,57 @@ the body of the exported HTML.
 
 Example:
 
-```
+```js
 exports.exportHTMLAdditionalContent = async (hookName, {padId}) => {
   return 'I am groot in ' + padId;
 };
 ```
 
+> **Note:** markup returned by this hook is sanitized before it reaches the
+> office-export converters (DOCX/PDF/ODT/DOC). Those converters run on the
+> server and dereference subresource URLs, so any attribute or CSS `url()`
+> that resolves to an absolute URL — `<img src>`, `srcset`, `poster`,
+> `<link href>`, `style="background:url(...)"` — is removed, along with
+> `<script>`, `<iframe>`, `<object>`, `<embed>` and `<base>`. Relative URLs,
+> `data:` URIs and ordinary `<a href>` hyperlinks are preserved. The plain
+> HTML export is not affected. The same applies to `getLineHTMLForExport` and
+> `stylesForExport`.
+
+## exportHTMLSend
+
+Called from: `src/node/handler/ExportHandler.ts`
+
+Things in context:
+
+1. html - the full HTML body of the pad that is about to be sent to the client
+   as an HTML export.
+
+This hook is invoked via `aCallFirst` for HTML exports, just before the HTML is
+sent in the response. It lets a plugin rewrite or replace the exported HTML
+body. Return the modified HTML string; if a non-empty value is returned, it
+replaces the HTML that would otherwise be sent.
+
+## exportConvert
+
+Called from: `src/node/handler/ExportHandler.ts`
+
+Things in context:
+
+1. srcFile - the path to the source file (the intermediate file Etherpad has
+   produced) that needs to be converted.
+2. destFile - the path to the destination file Etherpad expects the converted
+   output to be written to.
+3. req - the express request object.
+4. res - the express response object.
+
+This hook is invoked via `aCallAll` for non-HTML export formats. It lets a
+plugin handle the export format conversion itself instead of letting Etherpad
+fall back to its bundled LibreOffice converter. If any plugin returns a value
+(making the hook result non-empty), Etherpad assumes the conversion was handled
+by the plugin and skips the built-in converter.
+
 ## stylesForExport
-Called from: src/node/utils/ExportHtml.js
+Called from: `src/node/utils/ExportHtml.js`
 
 Things in context:
 
@@ -709,14 +910,14 @@ This hook will allow a plug-in developer to append Styles to the Exported HTML.
 
 Example:
 
-```
+```js
 exports.stylesForExport = function(hook, padId, cb){
   cb("body{font-size:13.37em !important}");
 }
 ```
 
 ## aceAttribClasses
-Called from: src/static/js/linestylefilter.js
+Called from: `src/static/js/linestylefilter.js`
 
 This hook is called when attributes are investigated on a line. It is useful if
 you want to add another attribute type or property type to a pad.
@@ -727,7 +928,7 @@ or provide an object whose properties will be assigned to the attributes object.
 
 Example:
 
-```
+```js
 exports.aceAttribClasses = (hookName, attrs, cb) => {
   return cb([{
     sub: 'tag:sub',
@@ -736,7 +937,7 @@ exports.aceAttribClasses = (hookName, attrs, cb) => {
 ```
 
 ## exportFileName
-Called from src/node/handler/ExportHandler.js
+Called from `src/node/handler/ExportHandler.js`
 
 Things in context:
 
@@ -746,14 +947,14 @@ This hook will allow a plug-in developer to modify the file name of an exported 
 
 Example:
 
-```
+```js
 exports.exportFileName = function(hook, padId, callback){
   callback("newFileName"+padId);
 }
 ```
 
 ## exportHtmlAdditionalTags
-Called from src/node/utils/ExportHtml.js
+Called from `src/node/utils/ExportHtml.js`
 
 Things in context:
 
@@ -762,7 +963,7 @@ Things in context:
 This hook will allow a plug-in developer to include more properties and attributes to support during HTML Export. If tags are stored as `['color', 'red']` on the attribute pool, use `exportHtmlAdditionalTagsWithData` instead. An Array should be returned.
 
 Example:
-```
+```js
 // Add the props to be supported in export
 exports.exportHtmlAdditionalTags = function(hook, pad, cb){
   var padId = pad.id;
@@ -771,7 +972,7 @@ exports.exportHtmlAdditionalTags = function(hook, pad, cb){
 ```
 
 ## exportHtmlAdditionalTagsWithData
-Called from src/node/utils/ExportHtml.js
+Called from `src/node/utils/ExportHtml.js`
 
 Things in context:
 
@@ -780,7 +981,7 @@ Things in context:
 Identical to `exportHtmlAdditionalTags`, but for tags that are stored with a specific value (not simply `true`) on the attribute pool. For example `['color', 'red']`, instead of `['bold', true]`. This hook will allow a plug-in developer to include more properties and attributes to support during HTML Export. An Array of arrays should be returned. The exported HTML will contain tags like `<span data-color="red">` for the content where attributes are `['color', 'red']`.
 
 Example:
-```
+```js
 // Add the props to be supported in export
 exports.exportHtmlAdditionalTagsWithData = function(hook, pad, cb){
   var padId = pad.id;
@@ -788,55 +989,221 @@ exports.exportHtmlAdditionalTagsWithData = function(hook, pad, cb){
 };
 ```
 
-## exportEtherpadAdditionalContent
-Called from src/node/utils/ExportEtherpad.js and
-src/node/utils/ImportEtherpad.js
+## `exportEtherpadAdditionalContent`
 
-Things in context: Nothing
+Called from `src/node/utils/ExportEtherpad.js` and
+`src/node/utils/ImportEtherpad.js`.
 
-Useful for exporting and importing pad metadata that is stored in the database
-but not in the pad's content or attributes. For example, in ep_comments_page the
-comments are stored as `comments:padId:uniqueIdOfComment` so a complete export
-of all pad data to an `.etherpad` file must include the `comments:padId:*`
-records.
+Called when exporting to an `.etherpad` file or when importing from an
+`.etherpad` file. The hook function should return prefixes for pad-specific
+records that should be included in the export/import. On export, all
+`${prefix}:${padId}` and `${prefix}:${padId}:*` records are included in the
+generated `.etherpad` file. On import, all `${prefix}:${padId}` and
+`${prefix}:${padId}:*` records are loaded into the database.
+
+Context properties: None.
 
 Example:
 
-```
+```js
 // Add support for exporting comments metadata
 exports.exportEtherpadAdditionalContent = () => ['comments'];
 ```
 
-## userLeave
-Called from src/node/handler/PadMessageHandler.js
+## `exportEtherpad`
 
-This in context:
+Called from `src/node/utils/ExportEtherpad.js`.
 
-1. session (including the pad id and author id)
+Called when exporting to an `.etherpad` file.
 
-This hook gets called when an author leaves a pad. This is useful if you want to perform certain actions after a pad has been edited
+Context properties:
+
+* `pad`: The exported pad's Pad object.
+* `data`: JSONable output object. This is pre-populated with records from core
+  Etherpad as well as pad-specific records with prefixes from the
+  `exportEtherpadAdditionalContent` hook. Registered hook functions can modify
+  this object (but not replace the object) to perform any desired
+  transformations to the exported data (such as the inclusion of
+  plugin-specific records). All registered hook functions are executed
+  concurrently, so care should be taken to avoid race conditions with other
+  plugins.
+* `dstPadId`: The pad ID that should be used when writing pad-specific records
+  to `data` (instead of `pad.id`). This avoids leaking the writable pad ID
+  when a user exports a read-only pad. This might be a dummy value; plugins
+  should not assume that it is either the pad's real writable ID or its
+  read-only ID.
+
+## `importEtherpad`
+
+Called from `src/node/utils/ImportEtherpad.js`.
+
+Called when importing from an `.etherpad` file.
+
+Context properties:
+
+* `pad`: Temporary Pad object containing the pad's data read from the imported
+  `.etherpad` file. The `pad.db` object is a temporary in-memory database
+  whose records will be copied to the real database after they are validated
+  (see the `padCheck` hook). Registered hook functions MUST NOT use the real
+  database to access (read or write) pad-specific records; they MUST instead
+  use `pad.db`. All registered hook functions are executed concurrently, so
+  care should be taken to avoid race conditions with other plugins.
+* `data`: Raw JSONable object from the `.etherpad` file. This data must not be
+  modified.
+* `srcPadId`: The pad ID used for the pad-specific information in `data`.
+
+## `import`
+
+Called from: `src/node/handler/ImportHandler.js`
+
+Called when a user submits a document for import, before the document is
+converted to HTML. The hook function should return a truthy value if the hook
+function elected to convert the document to HTML.
+
+Context properties:
+
+* `destFile`: The destination HTML filename.
+* `fileEnding`: The lower-cased filename extension from `srcFile` **with leading
+  period** (examples: `'.docx'`, `'.html'`, `'.etherpad'`).
+* `padId`: The identifier of the destination pad.
+* `srcFile`: The document to convert.
+* `ImportError`: Subclass of Error that can be thrown to provide a specific
+  error message to the user. The constructor's first argument must be a string
+  matching one of the [known error
+  identifiers](https://github.com/ether/etherpad-lite/blob/1.8.16/src/static/js/pad_impexp.js#L80-L86).
 
 Example:
 
-```
-exports.userLeave = function(hook, session, callback) {
-  console.log('%s left pad %s', session.author, session.padId);
+```javascript
+exports.import = async (hookName, {fileEnding, ImportError}) => {
+  // Reject all *.etherpad imports with a permission denied message.
+  if (fileEnding === '.etherpad') throw new ImportError('permission');
 };
 ```
 
-### clientReady
-Called from src/node/handler/PadMessageHandler.js
+## `userJoin`
 
-This in context:
+Called from: `src/node/handler/PadMessageHandler.js`
 
-1. message
+Called after users have been notified that a new user has joined the pad.
 
-This hook gets called when handling a CLIENT_READY which is the first message from the client to the server.
+Context properties:
+
+* `authorId`: The user's author identifier.
+* `displayName`: The user's display name.
+* `padId`: The real (not read-only) identifier of the pad the user joined. This
+  MUST NOT be shared with any users that are connected with read-only access.
+* `readOnly`: Whether the user only has read-only access.
+* `readOnlyPadId`: The read-only identifier of the pad the user joined.
+* `socket`: The socket.io Socket object.
 
 Example:
 
-```
-exports.clientReady = function(hook, message) {
-  console.log('Client has entered the pad' + message.padId);
+```javascript
+exports.userJoin = async (hookName, {authorId, displayName, padId}) => {
+  console.log(`${authorId} (${displayName}) joined pad ${padId});
 };
 ```
+
+## `userLeave`
+
+Called from: `src/node/handler/PadMessageHandler.js`
+
+Called when a user disconnects from a pad. This is useful if you want to perform
+certain actions after a pad has been edited.
+
+Context properties:
+
+* `authorId`: The user's author ID.
+* `padId`: The pad's real (not read-only) identifier.
+* `readOnly`: If truthy, the user only has read-only access.
+* `readOnlyPadId`: The pad's read-only identifier.
+* `socket`: The socket.io Socket object.
+
+Example:
+
+```javascript
+exports.userLeave = async (hookName, {author, padId}) => {
+  console.log(`${author} left pad ${padId}`);
+};
+```
+
+## `chatNewMessage`
+
+Called from: `src/node/handler/PadMessageHandler.js`
+
+Called when a user (or plugin) generates a new chat message, just before it is
+saved to the pad and relayed to all connected users.
+
+Context properties:
+
+* `message`: The chat message object. Plugins can mutate this object to change
+  the message text or add custom metadata to control how the message will be
+  rendered by the `chatNewMessage` client-side hook. The message's `authorId`
+  property can be trusted (the server overwrites any client-provided author ID
+  value with the user's actual author ID before this hook runs).
+* `padId`: The pad's real (not read-only) identifier.
+* `pad`: The pad's Pad object.
+
+## ccRegisterBlockElements
+
+Called from: `src/node/handler/ImportHandler.ts`,
+`src/node/utils/ImportEtherpad.ts`, and `src/static/js/contentcollector.ts`
+
+Things in context: None
+
+This is the **server-side companion** to the client-only
+`aceRegisterBlockElements` hook (see the client-side hooks documentation), and
+it is the half that plugin authors commonly forget to implement. Registering a
+block element only on the client means imports and server-side content
+collection do not treat your element as block-level.
+
+The return value of this hook should be an array of tag names. Those tags are
+added to the set of block-level elements that the content collector and the
+import path (`.etherpad` and HTML/document imports) recognise, so the
+collected/imported content is segmented into the correct lines. Plugins that
+declare block elements via `aceRegisterBlockElements` should declare the same
+elements here too.
+
+```js
+exports.ccRegisterBlockElements = () => ['pre', 'blockquote'];
+```
+
+## createServer
+
+Called from: `src/node/server.ts`
+
+Things in context: None
+
+Invoked via `aCallAll` once during Etherpad startup, after the HTTP server has
+been created. Use it to run any plugin initialisation that needs to happen when
+the server comes up.
+
+## restartServer
+
+Called from: `src/node/hooks/express/adminsettings.ts` (and the plugin
+installer)
+
+Things in context: None
+
+Invoked via `aCallAll` when the server is restarted from the admin interface
+(for example after settings are saved or a plugin is installed/uninstalled). Use
+it to re-initialise plugin state that needs to survive an admin-triggered
+restart.
+
+## clientReady
+
+> **Deprecated:** use the `userJoin` hook instead. This hook is fired with an
+> awkward context (the raw `CLIENT_READY` message rather than a structured set
+> of context properties) and is kept only for backwards compatibility.
+
+Called from: `src/node/handler/PadMessageHandler.ts`
+
+Things in context:
+
+1. message - the raw `CLIENT_READY` message sent by the client as it joins a
+   pad.
+
+Invoked via `aCallAll` while a client is joining a pad, before the author and
+session are fully set up. Because the context is just the raw client message,
+new plugins should use `userJoin` instead.

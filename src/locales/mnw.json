@@ -1,9 +1,11 @@
 {
 	"@metadata": {
 		"authors": [
-			"Aue Nai"
+			"Aue Nai",
+			"咽頭べさ"
 		]
 	},
+	"admin_plugins.description": "တၚ်ထမံက်ထ္ၜး",
 	"index.newPad": "တၞးတၟိ",
 	"pad.toolbar.bold.title": "လ္စံက် (Ctrl+B)",
 	"pad.toolbar.italic.title": "ဒစေၚ် (Ctrl+I)",
@@ -43,13 +45,13 @@
 	"timeslider.month.april": "ဨပြဳ",
 	"timeslider.month.may": "မေ",
 	"timeslider.month.june": "ဂျောန်",
-	"timeslider.month.july": "ဂျူလာင်",
+	"timeslider.month.july": "ဂျူလာၚ်",
 	"timeslider.month.august": "အဝ်ဂေတ်",
 	"timeslider.month.september": "\nသေပ်တေမ်ပါ",
 	"timeslider.month.october": "\nအံက်တဝ်ပါ",
 	"timeslider.month.november": "\nနဝ်ဝေမ်ပါ",
 	"timeslider.month.december": "ဒဳဇြေန်ပါ",
-	"timeslider.unnamedauthors": "{{num}} ဟွံကဵုယၟု {[ဂမၠိုၚ်(num) မွဲ: ကဝိ, တၞဟ်: ကဝိဂမၠိုၚ် ]}",
+	"timeslider.unnamedauthors": "{{num}} ဟွံကဵုယၟု {[plural(num) one: ကဝိ, other: ကဝိဂမၠိုၚ် ]}",
 	"pad.userlist.entername": "စုတ် ယၟုညးလွပ်",
 	"pad.userlist.unnamed": "ဟွံကဵုလဝ်ယၟု",
 	"pad.impexp.importbutton": " မပၠောပ်စုတ် လၟုဟ်",

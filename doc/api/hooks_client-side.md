@@ -4,7 +4,7 @@ Most of these hooks are called during or in order to set up the formatting
 process.
 
 ## documentReady
-Called from: src/templates/pad.html
+Called from: `src/templates/pad.html`
 
 Things in context:
 
@@ -14,7 +14,7 @@ This hook proxies the functionality of jQuery's `$(document).ready` event.
 
 ## aceDomLinePreProcessLineAttributes
 
-Called from: src/static/js/domline.js
+Called from: `src/static/js/domline.js`
 
 Things in context:
 
@@ -36,7 +36,7 @@ more.
 
 ## aceDomLineProcessLineAttributes
 
-Called from: src/static/js/domline.js
+Called from: `src/static/js/domline.js`
 
 Things in context:
 
@@ -58,7 +58,7 @@ more.
 
 ## aceCreateDomLine
 
-Called from: src/static/js/domline.js
+Called from: `src/static/js/domline.js`
 
 Things in context:
 
@@ -78,7 +78,7 @@ question, and cls will be the new class of the element going forward.
 
 ## acePostWriteDomLineHTML
 
-Called from: src/static/js/domline.js
+Called from: `src/static/js/domline.js`
 
 Things in context:
 
@@ -89,7 +89,7 @@ page.
 
 ## aceAttribsToClasses
 
-Called from: src/static/js/linestylefilter.js
+Called from: `src/static/js/linestylefilter.js`
 
 Things in context:
 
@@ -107,7 +107,7 @@ be parsed into a valid class string.
 
 ## aceAttribClasses
 
-Called from: src/static/js/linestylefilter.js
+Called from: `src/static/js/linestylefilter.js`
 
 Things in context:
 1. Attributes - Object of Attributes
@@ -125,7 +125,7 @@ exports.aceAttribClasses = function(hook_name, attr, cb){
 
 ## aceGetFilterStack
 
-Called from: src/static/js/linestylefilter.js
+Called from: `src/static/js/linestylefilter.js`
 
 Things in context:
 
@@ -141,7 +141,7 @@ later used by the aceCreateDomLine hook (documented above).
 
 ## aceEditorCSS
 
-Called from: src/static/js/ace.js
+Called from: `src/static/js/ace.js`
 
 Things in context: None
 
@@ -150,7 +150,7 @@ should be an array of resource urls or paths relative to the plugins directory.
 
 ## aceInitInnerdocbodyHead
 
-Called from: src/static/js/ace.js
+Called from: `src/static/js/ace.js`
 
 Things in context:
 
@@ -163,7 +163,7 @@ editor HTML document.
 
 ## aceEditEvent
 
-Called from: src/static/js/ace2_inner.js
+Called from: `src/static/js/ace2_inner.js`
 
 Things in context:
 
@@ -180,7 +180,7 @@ your plugin) that use the information provided by the edit event.
 
 ## aceRegisterNonScrollableEditEvents
 
-Called from: src/static/js/ace2_inner.js
+Called from: `src/static/js/ace2_inner.js`
 
 Things in context: None
 
@@ -199,7 +199,7 @@ exports.aceRegisterNonScrollableEditEvents = function(){
 
 ## aceRegisterBlockElements
 
-Called from: src/static/js/ace2_inner.js
+Called from: `src/static/js/ace2_inner.js`
 
 Things in context: None
 
@@ -207,9 +207,36 @@ The return value of this hook will add elements into the "lineMarkerAttribute"
 category, making the aceDomLineProcessLineAttributes hook (documented below)
 call for those elements.
 
+## aceRegisterLineAttributes
+
+Called from: `src/static/js/ace2_inner.ts`
+
+Things in context: None
+
+Tells Etherpad which line attributes should be preserved when a user presses
+Enter to split a line. Without this hook, custom line attributes (such as
+headings or alignment) are lost when a line is split.
+
+The return value should be an array of attribute names:
+
+```
+exports.aceRegisterLineAttributes = function(){
+  return [ 'heading' ];
+}
+```
+
+When Enter is pressed on a line that has a registered attribute:
+
+* **Middle or end of line:** the attribute is copied to the new line below.
+* **Start of line (column 0):** the attribute moves down with the text content,
+  and the now-empty line above is cleared.
+
+This is backwards compatible — on Etherpad versions that do not have this hook,
+the registration is silently ignored.
+
 ## aceInitialized
 
-Called from: src/static/js/ace2_inner.js
+Called from: `src/static/js/ace2_inner.js`
 
 Things in context:
 
@@ -224,16 +251,19 @@ use in formatting hooks.
 
 ## postAceInit
 
-Called from: src/static/js/pad.js
+Called from: `src/static/js/pad.js`
 
 Things in context:
 
 1. ace - the ace object that is applied to this editor.
-2. pad - the pad object of the current pad.
+2. clientVars - Object containing client-side configuration such as author ID
+   and plugin settings. Your plugin can manipulate this object via the
+   `clientVars` server-side hook.
+3. pad - the pad object of the current pad.
 
 ## postToolbarInit
 
-Called from: src/static/js/pad_editbar.js
+Called from: `src/static/js/pad_editbar.js`
 
 Things in context:
 
@@ -248,14 +278,14 @@ Usage examples:
 
 ## postTimesliderInit
 
-Called from: src/static/js/timeslider.js
+Called from: `src/static/js/timeslider.js`
 
 There doesn't appear to be any example available of this particular hook being
 used, but it gets fired after the timeslider is all set up.
 
 ## goToRevisionEvent
 
-Called from: src/static/js/broadcast.js
+Called from: `src/static/js/broadcast.js`
 
 Things in context:
 
@@ -267,7 +297,7 @@ be any example available of this particular hook being used.
 
 ## userJoinOrUpdate
 
-Called from: src/static/js/pad_userlist.js
+Called from: `src/static/js/pad_userlist.js`
 
 Things in context:
 
@@ -276,28 +306,85 @@ Things in context:
 This hook is called on the client side whenever a user joins or changes. This
 can be used to create notifications or an alternate user list.
 
-## chatNewMessage
+## `chatNewMessage`
 
-Called from: src/static/js/chat.js
+Called from: `src/static/js/chat.js`
 
-Things in context:
+This hook runs on the client side whenever a chat message is received from the
+server. It can be used to create different notifications for chat messages. Hook
+functions can modify the `author`, `authorName`, `duration`, `rendered`,
+`sticky`, `text`, and `timeStr` context properties to change how the message is
+processed. The `text` and `timeStr` properties may contain HTML and come
+pre-sanitized; plugins should be careful to sanitize any added user input to
+avoid introducing an XSS vulnerability.
 
-1. authorName - The user that wrote this message
-2. author - The authorID of the user that wrote the message
-3. text - the message text
-4. sticky (boolean) - if you want the gritter notification bubble to fade out on
-   its own or just sit there
-5. timestamp - the timestamp of the chat message
-6. timeStr - the timestamp as a formatted string
-7. duration - for how long in milliseconds should the gritter notification
-   appear (0 to disable)
+Context properties:
 
-This hook is called on the client side whenever a chat message is received from
-the server. It can be used to create different notifications for chat messages.
+* `authorName`: The display name of the user that wrote the message.
+* `author`: The author ID of the user that wrote the message.
+* `text`: Sanitized message HTML, with URLs wrapped like `<a
+  href="url">url</a>`. (Note that `message.text` is not sanitized or processed
+  in any way.)
+* `message`: The raw message object as received from the server, except with
+  time correction and a default `authorId` property if missing. Plugins must not
+  modify this object. Warning: Unlike `text`, `message.text` is not
+  pre-sanitized or processed in any way.
+* `rendered` - Used to override the default message rendering. Initially set to
+  `null`. If the hook function sets this to a DOM element object or a jQuery
+  object, then that object will be used as the rendered message UI. Otherwise,
+  if this is set to `null`, then Etherpad will render a default UI for the
+  message using the other context properties.
+* `sticky` (boolean): Whether the gritter notification should fade out on its
+  own or just sit there until manually closed.
+* `timestamp`: When the chat message was sent (milliseconds since epoch),
+  corrected using the difference between the local clock and the server's clock.
+* `timeStr`: The message timestamp as a formatted string.
+* `duration`: How long (in milliseconds) to display the gritter notification (0
+  to disable).
+
+## `chatSendMessage`
+
+Called from: `src/static/js/chat.js`
+
+This hook runs on the client side whenever the user sends a new chat message.
+Plugins can mutate the message object to change the message text or add metadata
+to control how the message will be rendered by the `chatNewMessage` hook.
+
+Context properties:
+
+* `message`: The message object that will be sent to the Etherpad server.
+
+## `chatPrefillFromUser`
+
+Called from: `src/static/js/pad_userlist.ts`
+
+Called when the user clicks an entry in the user list. The default behavior is to
+open the chat panel and prefill the input with `@<name> `, where `<name>` is that
+user's display name (with whitespace replaced by underscores). Plugins can return
+a different prefill string from their callback — the first non-empty string
+returned wins.
+
+Typical use is by AI/bot plugins whose author display name (e.g. "AI Assistant")
+isn't a useful @-mention; the plugin can substitute its trigger string instead.
+
+Context properties:
+
+* `authorId`: The clicked user's author id.
+* `name`: The clicked user's display name.
+* `prefill`: The default prefill string Etherpad would otherwise use.
+
+Example:
+
+```javascript
+exports.chatPrefillFromUser = (hookName, {authorId, name}, cb) => {
+  if (authorId === window.clientVars.ep_my_bot.authorId) return cb('@bot ');
+  return cb();
+};
+```
 
 ## collectContentPre
 
-Called from: src/static/js/contentcollector.js
+Called from: `src/static/js/contentcollector.js`
 
 Things in context:
 
@@ -321,7 +408,7 @@ If you want to specify also a value, call cc.doAttrib(state,
 
 ## collectContentImage
 
-Called from: src/static/js/contentcollector.js
+Called from: `src/static/js/contentcollector.js`
 
 Things in context:
 
@@ -347,7 +434,7 @@ exports.collectContentImage = function(name, context){
 
 ## collectContentPost
 
-Called from: src/static/js/contentcollector.js
+Called from: `src/static/js/contentcollector.js`
 
 Things in context:
 
@@ -378,6 +465,20 @@ also use this to handle existing types.
 `collab_client.js` has a pretty extensive list of message types, if you want to
 take a look.
 
+## handleClientTimesliderMessage_`name`
+
+Called from: `src/static/js/broadcast.ts`
+
+Things in context:
+
+1. payload - the data that got sent with the message (use it for custom message
+   content)
+
+This is the timeslider analog of `handleClientMessage_name`. It gets called
+every time the timeslider receives a message of type `name`. Use it to handle
+custom message types (or react to existing ones) while a user is viewing the
+timeslider rather than editing the pad.
+
 ## aceStartLineAndCharForPoint-aceEndLineAndCharForPoint
 
 Called from: src/static/js/ace2_inner.js
@@ -396,7 +497,7 @@ This hook is provided to allow a plugin to turn DOM node selection into
 
 ## aceKeyEvent
 
-Called from: src/static/js/ace2_inner.js
+Called from: `src/static/js/ace2_inner.js`
 
 Things in context:
 
@@ -409,9 +510,37 @@ Things in context:
 This hook is provided to allow a plugin to handle key events.
 The return value should be true if you have handled the event.
 
+## acePaste
+
+Called from: `src/static/js/ace2_inner.ts`
+
+Things in context:
+
+1. editorInfo - information about the user who is making the change
+2. rep - information about where the change is being made
+3. documentAttributeManager - information about attributes in the document
+4. e - the fired paste event
+
+This hook is called when content is pasted into the editor, before Etherpad
+processes the pasted content. Use it to inspect or react to paste events.
+
+## aceDrop
+
+Called from: `src/static/js/ace2_inner.ts`
+
+Things in context:
+
+1. editorInfo - information about the user who is making the change
+2. rep - information about where the change is being made
+3. documentAttributeManager - information about attributes in the document
+4. e - the fired drop event
+
+This hook is called when content is dropped into the editor via drag-and-drop.
+Use it to inspect or react to drop events.
+
 ## collectContentLineText
 
-Called from: src/static/js/contentcollector.js
+Called from: `src/static/js/contentcollector.js`
 
 Things in context:
 
@@ -438,7 +567,7 @@ exports.collectContentLineText = (hookName, context) => {
 
 ## collectContentLineBreak
 
-Called from: src/static/js/contentcollector.js
+Called from: `src/static/js/contentcollector.js`
 
 Things in context:
 
@@ -451,7 +580,7 @@ domline or not. The return value should be either true(break the line) or false.
 
 ## disableAuthorColorsForThisLine
 
-Called from: src/static/js/linestylefilter.js
+Called from: `src/static/js/linestylefilter.js`
 
 Things in context:
 
@@ -467,7 +596,7 @@ deliniation. The return value should be either true(disable) or false.
 
 ## aceSetAuthorStyle
 
-Called from: src/static/js/ace2_inner.js
+Called from: `src/static/js/ace2_inner.js`
 
 Things in context:
 
@@ -484,7 +613,7 @@ hooks should return 1 if the plugin handles highlighting. If no plugin returns
 
 ## aceSelectionChanged
 
-Called from: src/static/js/ace2_inner.js
+Called from: `src/static/js/ace2_inner.js`
 
 Things in context:
 

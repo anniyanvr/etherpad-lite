@@ -13,6 +13,7 @@
 			"MuratTheTurkish",
 			"Ti4goc",
 			"Tuliouel",
+			"Unamane",
 			"Waldir",
 			"Waldyrious"
 		]
@@ -29,7 +30,7 @@
 	"admin_plugins.installed_fetching": "A obter plugins instalados...",
 	"admin_plugins.installed_nothing": "Não instalas-te nenhum plugin ainda.",
 	"admin_plugins.installed_uninstall.value": "Desinstalar",
-	"admin_plugins.last-update": "Ultima atualização",
+	"admin_plugins.last-update": "Última atualização",
 	"admin_plugins.name": "Nome",
 	"admin_plugins.page-title": "Gestor de plugins - Etherpad",
 	"admin_plugins.version": "Versão",
@@ -97,7 +98,6 @@
 	"pad.importExport.exportword": "Microsoft Word",
 	"pad.importExport.exportpdf": "PDF",
 	"pad.importExport.exportopen": "ODF (Open Document Format)",
-	"pad.importExport.abiword.innerHTML": "Só pode fazer importações de texto não formatado ou com formato HTML. Para funcionalidades de importação de texto  mais avançadas, <a href=\"https://github.com/ether/etherpad-lite/wiki/How-to-enable-importing-and-exporting-different-file-formats-with-AbiWord\">instale AbiWord ou LibreOffice</a>, por favor.",
 	"pad.modals.connected": "Ligado.",
 	"pad.modals.reconnecting": "A restabelecer ligação à nota…",
 	"pad.modals.forcereconnect": "Forçar restabelecimento de ligação",
@@ -174,6 +174,7 @@
 	"pad.impexp.convertFailed": "Não foi possível importar este ficheiro. Utilize outro formato ou copie e insira manualmente",
 	"pad.impexp.padHasData": "Não fomos capazes de importar este ficheiro porque esta nota já tinha alterações; importe para uma nota nova, por favor",
 	"pad.impexp.uploadFailed": "O carregamento falhou; tente novamente, por favor",
+	"pad.impexp.permission": "A importação está desativada porque nunca contribuiu para esta nota. Contribua pelo menos uma vez antes de importar, por favor",
 	"pad.impexp.importfailed": "A importação falhou",
 	"pad.impexp.copypaste": "Copie e insira, por favor",
 	"pad.impexp.exportdisabled": "A exportação no formato {{type}} está desativada. Por favor, contacte o administrador do sistema para mais informações.",
